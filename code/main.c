@@ -55,8 +55,15 @@ int main(void) {
 //		float derp = gyroscope_data[2];
 //		float temp = ADC_ValueAveraged[0];
 
-		float leftPwm = -lineSensorValue/100.0f;
-		float rightPwm = lineSensorValue/100.0f;
+		float leftPwm = 0;
+		float rightPwm = 0;
+//		float forward
+//		if (lineSensorState == onLine) {
+			leftPwm = 0.4 -lineSensorValue/50.0f;
+			rightPwm = 0.4 + lineSensorValue/50.0f;
+//		}
+
+
 
 		setLeftMotor(leftPwm);
 		setRightMotor(rightPwm);

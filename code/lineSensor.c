@@ -12,7 +12,7 @@ float lineSensorValue = 0;
 
 // the coordinate for each sensor in x-axis
 int32_t sensorCoordinate[SENSOR_COUNT]= {-35, -25, -15, -5, 5, 15, 25, 35};
-const int32_t orderInADC[SENSOR_COUNT]= {2, 3, 4, 5, 6, 7, 8, 9};
+const int32_t orderInADC[SENSOR_COUNT]= {2, 3, 4, 5, 6, 7, 10, 11};
 
 
 int32_t sensorMins[SENSOR_COUNT]= {4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000};
