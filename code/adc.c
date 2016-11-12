@@ -12,11 +12,9 @@
 
 // Global variables
 volatile uint16_t ADC_Value[ADC_CHANNEL_NUM] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-//volatile uint32_t ADC_ValuesSummed[ADC_CHANNEL_NUM] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 volatile float ADC_ValueAveraged[ADC_CHANNEL_NUM] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
 //Private variables
-//uint32_t sumCounter=0;
 
 // Private functions
 
@@ -44,8 +42,6 @@ void init_adc(void) {
 
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5;
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-	//		dmaStreamAllocate(STM32_DMA_STREAM(STM32_DMA_STREAM_ID(2, 4)),2,(stm32_dmaisr_t)int_handler,(void *)0);
 
 #define ADC_CDR_ADDRESS			((uint32_t)0x40012308)
 
@@ -123,20 +119,6 @@ void init_adc(void) {
 	ADC_RegularChannelConfig(ADC2, ADC_Channel_15, 7, SAMPLETIME);
 	ADC_RegularChannelConfig(ADC2, ADC_Channel_9, 8, SAMPLETIME);
 
-	//	// ADC1 regular channels 0, 5, 10, 13
-//	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 1, SAMPLETIME);
-//	ADC_RegularChannelConfig(ADC1, ADC_Channel_12, 2, SAMPLETIME);
-//	ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 3, SAMPLETIME);
-//	ADC_RegularChannelConfig(ADC1, ADC_Channel_2, 4, SAMPLETIME);
-//	ADC_RegularChannelConfig(ADC1, ADC_Channel_4, 5, SAMPLETIME);
-//
-//	// ADC2 regular channels 1, 6, 11, 15
-//	ADC_RegularChannelConfig(ADC2, ADC_Channel_11, 1, SAMPLETIME);
-//	ADC_RegularChannelConfig(ADC2, ADC_Channel_13, 2, SAMPLETIME);
-//	ADC_RegularChannelConfig(ADC2, ADC_Channel_1, 3, SAMPLETIME);
-//	ADC_RegularChannelConfig(ADC2, ADC_Channel_3, 4, SAMPLETIME);
-//	ADC_RegularChannelConfig(ADC2, ADC_Channel_4, 5, SAMPLETIME);//throw away this reading
-
 	// Enable DMA request after last transfer (Multi-ADC mode)
 	ADC_MultiModeDMARequestAfterLastTransferCmd(ENABLE);
 	//	ADC_EOCOnEachRegularChannelCmd(ADC1, ENABLE);
@@ -200,21 +182,7 @@ void DMA2_Stream0_IRQHandler() {
 		DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
 	}
 		int i;
-	//	int j;
 		for(i=0; i < ADC_CHANNEL_NUM; i++ ){
-			ADC_ValueAveraged[i]= 0.95f*ADC_ValueAveraged[i] + 0.05f*ADC_Value[i];
+			ADC_ValueAveraged[i]= ADC_AVERAGE_FILTERCONSTANT*ADC_ValueAveraged[i] + (1.0f - ADC_AVERAGE_FILTERCONSTANT)*ADC_Value[i];
 		}
-
-
-	//	sumCounter++;
-	//calculating average and reseting sum
-	//	if(sumCounter == ADC_AVERAGE_COUNT){
-	//		for(j=0; j < ADC_CHANNEL_NUM; j++ ){
-	//			ADC_ValueAveraged[j]= ADC_ValuesSummed[j]/ADC_AVERAGE_COUNT;
-	//			ADC_ValuesSummed[j]=0;
-	//		}
-	//		sumCounter=0;
-	//	}
-
-
 }

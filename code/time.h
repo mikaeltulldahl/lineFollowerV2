@@ -3,7 +3,7 @@
 
 #include "master_include.h"
 
-#define CONTROL_LOOP_FREQ 2000
+#define CONTROL_LOOP_FREQ 500
 
 #define CONTROL_LOOP_PERIOD (1/(float)CONTROL_LOOP_FREQ)
 #define get_time_tics() TIM2->CNT

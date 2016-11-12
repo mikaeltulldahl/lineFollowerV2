@@ -83,11 +83,11 @@ void setLeftMotor(float pwm){
 	pwm = saturate(pwm);
 
 	if(pwm >= 0){
-		PWM_IN2_B2 = PWM_OUT_NORMALIZED_TO_TICKS(pwm);
-		PWM_IN1_B2 = PWM_OUT_NORMALIZED_TO_TICKS(0);
-	}else{
+		PWM_IN1_B2 = PWM_OUT_NORMALIZED_TO_TICKS(pwm);
 		PWM_IN2_B2 = PWM_OUT_NORMALIZED_TO_TICKS(0);
-		PWM_IN1_B2 = PWM_OUT_NORMALIZED_TO_TICKS(-pwm);
+	}else{
+		PWM_IN1_B2 = PWM_OUT_NORMALIZED_TO_TICKS(0);
+		PWM_IN2_B2 = PWM_OUT_NORMALIZED_TO_TICKS(-pwm);
 	}
 }
 

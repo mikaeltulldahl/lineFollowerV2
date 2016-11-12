@@ -50,31 +50,76 @@ void lineSensorCalibrate(void){
 	}
 }
 
-/*
- * use only this function to get sensor readings (nothing else needed)
- * make sure to run init vilseSensor(); and vilseSensorCalibrate(); before using this
- *
- *  usage: 	sensor s = getSensorReading();
- *  		int reading = s.value;
- *  		sensorState st= s.state;
- */
+//uint16_t sortArrayIndexes(int n, float indexes[], float x[]){
+//	uint16_t temp;
+//    int i, j;
+//    // the following two loops sort the array x in ascending order
+//    for(i=0; i<n-1; i++) {
+//        for(j=i+1; j<n; j++) {
+//            if(x[j] < x[i]) {
+//                // swap elements
+//                temp = x[i];
+//                x[i] = x[j];
+//                x[j] = temp;
+//            }
+//        }
+//    }
+
+
+// https://en.wikiversity.org/wiki/C_Source_Code/Find_the_median_and_mean
+uint16_t median(int n, uint16_t x[]) {
+	uint16_t temp;
+    int i, j;
+    // the following two loops sort the array x in ascending order
+    for(i=0; i<n-1; i++) {
+        for(j=i+1; j<n; j++) {
+            if(x[j] < x[i]) {
+                // swap elements
+                temp = x[i];
+                x[i] = x[j];
+                x[j] = temp;
+            }
+        }
+    }
+
+    //return the average of the elements in the middle
+#define AVERAGE_SAMPLES 20
+    int start = n/2 -  AVERAGE_SAMPLES/2;
+    int end = n/2 +  AVERAGE_SAMPLES/2;
+    uint32_t average = 0;
+
+    for(i = start; i < end; i++) average += x[i];
+
+    average /= AVERAGE_SAMPLES;
+    return average;
+}
+
 void updateSensorReading(void){
 	int32_t y = 0;
 	float sensorSum = 0;
 	int i;
 	float sensorVal=0;
-	float sensorMax =0;
+//	float indexesSorted[SENSOR_COUNT];
+
+	float sensorMax = 0;
+	int maxIndex = 0;
+	float sensorSecondMax = 0;
+	int secondMaxIndex = 0;
 
 	for(i=0; i < SENSOR_COUNT; ++i){
 		sensorVal = getSensorReadingNormalized(i);//ADC_ValueAveraged[i] - sensorMins[i];
 //		sensorVal-= 0.1;
 		if (sensorVal < 0) sensorVal =0;
 
-		y = y + sensorCoordinate[i]*sensorVal;
+		y += sensorCoordinate[i]*sensorVal;
 		sensorSum += sensorVal;
 
 		if(sensorVal>sensorMax){
 			sensorMax = sensorVal;
+			maxIndex = i;
+		}else if (sensorVal>sensorSecondMax){
+			sensorSecondMax = sensorVal;
+			secondMaxIndex = i;
 		}
 	}
 
@@ -89,5 +134,6 @@ void updateSensorReading(void){
 	}else{
 		lineSensorState = onLine;
 		lineSensorValue = y/sensorSum;
+//		lineSensorValue = (sensorCoordinate[maxIndex]*sensorMax + sensorCoordinate[secondMaxIndex]*sensorSecondMax)/(sensorMax + sensorSecondMax);
 	}
 }

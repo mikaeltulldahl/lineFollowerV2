@@ -21,24 +21,16 @@ void initPwm_out(){
 	GPIO_PinAFConfig(PWM_OUT_GPIO,PWM_OUT_PINSOURCE4,PWM_OUT_AF);
 
 	RCC_APB2PeriphClockCmd(PWM_OUT_TIM_CLK,ENABLE);
-//	RCC_GetClocksFreq(RCC_APB1Periph_TIM3);
-//	int pclk1freq = 42000000;
-//	int tim_prescaler = pclk1freq/(PWM_OUT_FREQ *   //max 65535
 
-
-
-//	PrescalerValue =(uint16_t) (SystemCoreClock  / 8000000)-1;//3
-//pwmfreqOLD = (clk/prescaler)/periodTicks = (168000000/60)/56000 = 50
-	//pwmfreq = (clk/prescaler)/periodTicks = (168000000/1)/11200 = 15000
-	TIM_TimeBaseStructure.TIM_Period=PWM_OUT_PERIOD_TICKS;//pclk1/(prescaler*PWM_OUT_FREQ) --> 56000 which is smaller than the max 65535
+	TIM_TimeBaseStructure.TIM_Period=PWM_OUT_PERIOD_TICKS;
 	TIM_TimeBaseStructure.TIM_CounterMode=TIM_CounterMode_Up;
 	TIM_TimeBaseStructure.TIM_ClockDivision=0;
 
-	TIM_TimeBaseStructure.TIM_Prescaler=1-1; //168mhz clk/(59+1) -> overflow after 23ms if period is max
+	TIM_TimeBaseStructure.TIM_Prescaler=PWM_OUT_PRESCALER;
 	TIM_TimeBaseInit(PWM_OUT_TIMER,&TIM_TimeBaseStructure);
 
 	//PWM out 1
-	TIM_OCInitStructure.TIM_OCMode=TIM_OCMode_PWM1;//PWM1;
+	TIM_OCInitStructure.TIM_OCMode=TIM_OCMode_PWM1;
 	TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Enable;
 	TIM_OCInitStructure.TIM_OCPolarity=TIM_OCPolarity_High;
 
