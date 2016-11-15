@@ -11,7 +11,7 @@ sensorState lineSensorState =  init;
 float lineSensorValue = 0;
 
 // the coordinate for each sensor in x-axis
-int32_t sensorCoordinate[SENSOR_COUNT]= {-35, -25, -15, -5, 5, 15, 25, 35};
+int32_t sensorCoordinate[SENSOR_COUNT]= {-40, -25, -15, -5, 5, 15, 25, 40};
 const int32_t orderInADC[SENSOR_COUNT]= {2, 3, 4, 5, 6, 7, 10, 11};
 
 

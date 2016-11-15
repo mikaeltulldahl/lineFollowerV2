@@ -26,13 +26,17 @@ int main(void) {
 
 	initMotors();
 	initMPU9250(); //SPI2
-	initUart(); //USART1
+//	initUart(); //USART1
 	initLineSensor();
 
 
 	uint32_t start_tick = get_time_tics();
 	uint32_t control_period_ticks = 100000*CONTROL_LOOP_PERIOD; //500Hz control loop
 
+
+//	setLeftMotor(0);
+//	setRightMotor(0.3);
+//	while(1);
 //	SET_LED();
 //	delay_ms(200);
 //	CLEAR_LED();
@@ -57,17 +61,30 @@ int main(void) {
 
 		float leftPwm = 0;
 		float rightPwm = 0;
-//		float forward
-//		if (lineSensorState == onLine) {
-			leftPwm = 0.4 -lineSensorValue/50.0f;
-			rightPwm = 0.4 + lineSensorValue/50.0f;
+		float error = lineSensorValue/35.0f;
+		if (error >1) error = 1;
+		float forwardPwm = 0.9 - 0.7*fabs(error);
+
+//		leftPwm = forwardPwm -lineSensorValue/30.0f + gyroscope_data[2]/500.0f;
+//		rightPwm = forwardPwm + lineSensorValue/30.0f - gyroscope_data[2]/200.0f;
+
+		float referenceAngRate = lineSensorValue*18;
+		leftPwm = forwardPwm + (gyroscope_data[2]- referenceAngRate)/800.0f;
+		rightPwm = forwardPwm -(gyroscope_data[2]- referenceAngRate)/800.0f;
+//		if (lineSensorState==lostLineLeft){
+//			leftPwm = 0;
+//			rightPwm = -0.5;
+//		}
+//		if (lineSensorState==lostLineRight){
+//			leftPwm = -0.5;
+//			rightPwm = 0;
 //		}
 
 
 
 		setLeftMotor(leftPwm);
 		setRightMotor(rightPwm);
-		uart_send_data();
+//		uart_send_data();
 
 	}
 }

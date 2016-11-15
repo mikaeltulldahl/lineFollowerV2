@@ -70,6 +70,7 @@ float saturate(float in){
 void setRightMotor(float pwm){
 	pwm = saturate(pwm);
 
+	pwm *= 0.5;
 	if(pwm >= 0){
 		PWM_IN1_A2 = PWM_OUT_NORMALIZED_TO_TICKS(pwm);
 		PWM_IN2_A2 = PWM_OUT_NORMALIZED_TO_TICKS(0);
