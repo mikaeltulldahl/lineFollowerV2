@@ -1,62 +1,45 @@
 #include <Arduino.h>
+#include <TeensyThreads.h>
+#include "Logger.h"
 #include "Motor.h"
-#include <SPI.h>
-#include <MPU9250.h>
+#include "Positioning.h"
 
-int led = 13;
+int ledPin = 13;
 
 Motor rightMotor(0);
 Motor leftMotor(1);
 
-MPU9250 IMU(SPI,10);
+Positioning positioning(0);
+Logger logger(0);
 
-float heading = 0;
-int status;
+volatile int blinkcode = 3;
 
-void setup()
-{
-	pinMode(led, OUTPUT);
-
-	SPI.setMOSI(11);
-	SPI.setMISO(12);
-	SPI.setSCK(27);
-
-	  // serial to display data
-  Serial.begin(115200);
-  while(!Serial) {}
-    	digitalWrite(led, HIGH);   // turn the LED on (HIGH is the voltage level)
-	delay(500);               // wait for a second
-	digitalWrite(led, LOW);    // turn the LED off by making the voltage LOW
-	delay(500);               // wait for a second
-
-  // start communication with IMU 
-  status = IMU.begin();
-  IMU.setGyroRange(IMU.GYRO_RANGE_2000DPS);
-  if (status < 0) {
-    Serial.println("IMU initialization unsuccessful");
-    Serial.println("Check IMU wiring or try cycling power");
-    Serial.print("Status: ");
-    Serial.println(status);
-    while(1) {}
+void blinkthread() {
+  while(1) {
+      for (int i=0; i<blinkcode; i++) {
+        digitalWrite(ledPin, HIGH);
+        threads.delay(150);
+        digitalWrite(ledPin, LOW);
+        threads.delay(150);
+      }
+      threads.delay(2000);
   }
-  	digitalWrite(led, HIGH);   // turn the LED on (HIGH is the voltage level)
-	delay(500);               // wait for a second
-	digitalWrite(led, LOW);    // turn the LED off by making the voltage LOW
-	delay(500);               // wait for a second
 }
 
-void loop()
-{
-	digitalWrite(led, HIGH);   // turn the LED on (HIGH is the voltage level)
-	delay(1000);               // wait for a second
-	digitalWrite(led, LOW);    // turn the LED off by making the voltage LOW
-	delay(1000);               // wait for a second
-	rightMotor.set(0.3);
-	leftMotor.set(0.3);
-	IMU.readSensor();
-	  Serial.print(180/3.14159*IMU.getGyroZ_rads(),6);
-  Serial.print("\t");
-  heading += 0.1*180/3.14159*IMU.getGyroZ_rads();
-  Serial.println(heading,6);
+void setup() {
+  Serial.begin(115200);
+  Serial.println("START");
+  threads.setDefaultTimeSlice(1);
+  pinMode(ledPin, OUTPUT);
+  logger.init();
+  positioning.init();
+  threads.addThread(blinkthread);
+}
 
+void loop() {
+  positioning.update();
+  logger.update();
+  threads.delay(10);      // wait for a second
+  rightMotor.set(0.3);
+  leftMotor.set(0.3);
 }
