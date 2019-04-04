@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <TeensyThreads.h>
+#include "Linesensor.h"
 #include "Logger.h"
 #include "Motor.h"
 #include "Positioning.h"
@@ -11,6 +12,7 @@ Motor leftMotor(1);
 
 Positioning positioning(0);
 Logger logger(0);
+Linesensor linesensor(0);
 
 volatile int blinkcode = 3;
 
@@ -33,6 +35,7 @@ void setup() {
   pinMode(ledPin, OUTPUT);
   logger.init();
   positioning.init();
+  linesensor.init();
   threads.addThread(blinkthread);
 }
 
@@ -42,4 +45,5 @@ void loop() {
   threads.delay(10);      // wait for a second
   rightMotor.set(0.3);
   leftMotor.set(0.3);
+  linesensor.update();
 }
