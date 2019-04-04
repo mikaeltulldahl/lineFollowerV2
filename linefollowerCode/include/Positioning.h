@@ -7,7 +7,7 @@ class Positioning {
   void init();
   void update();
 
-  float heading, posX, posY;
+  float headingRad, angVelRad, posX, posY;
 };
 
 #endif /* POSITIONING_H_ */
