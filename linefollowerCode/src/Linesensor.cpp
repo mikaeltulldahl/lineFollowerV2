@@ -74,10 +74,10 @@ void Linesensor::updateCalibration() {
         sensorMaxs[i] = adc_value[i];
       } else if (adc_value[i] < sensorMins[i]) {
         sensorMins[i] = adc_value[i];
-      } else if (sensorRange[i] > 2) {
+      } //else if (sensorRange[i] > 2) {
         //sensorMaxs[i] -= 1;
         //sensorMins[i] += 1;
-      }
+      //}
 
       int diff = sensorMaxs[i] - sensorMins[i];
       if (diff <= 0) {
@@ -159,7 +159,7 @@ void Linesensor::update() {
   updateLine();
   updateCalibration();
 
-  Serial.print(stateToString(lineSensorState));
+  /*Serial.print(stateToString(lineSensorState));
   if (lineSensorState == onLine) {
     Serial.print("<");
     Serial.print(lineSensorValue, 1);
@@ -172,7 +172,7 @@ void Linesensor::update() {
       }
     }
   }
-  Serial.println();
+  Serial.println();*/
 
   /*Serial.print("<");
   Serial.print(adc->analogRead(adc_pins[0]) * VREF / adc->getMaxValue(ADC_0),

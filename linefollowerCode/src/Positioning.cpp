@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <MPU9250.h>
 #include <SPI.h>
+#include <TeensyThreads.h>
 
 MPU9250 IMU(SPI, 10);
 
@@ -12,7 +13,7 @@ float gyroZbias;
 Positioning::Positioning(int i) {}
 
 void Positioning::init(void) {
-  headingRad = 0;
+  heading = 0;
   SPI.setMOSI(11);
   SPI.setMISO(12);
   SPI.setSCK(27);
@@ -26,7 +27,38 @@ void Positioning::init(void) {
     Serial.println(status);
   }
   lastTime = millis();
-  gyroZbias = IMU.getGyroZ_rads();
+  gyroCalibrated = false;
+  calibrateGyroBias();
+}
+
+void Positioning::calibrateGyroBias() {
+#define CALIBRATION_SAMPLES_NUM 100
+#define CALIBRATION_STABILITY_CRITERIA 0.5f
+  float samples[CALIBRATION_SAMPLES_NUM];
+  float sum = 0;
+  for (int i = 0; i < CALIBRATION_SAMPLES_NUM; i++) {
+    IMU.readSensor();
+    samples[i] = 180.0f / 3.14159f * IMU.getGyroZ_rads();
+    sum += samples[i];
+    threads.delay(10);
+  }
+  float diffSqr = 0;
+  float meanSample = sum / (float)CALIBRATION_SAMPLES_NUM;
+  for (int i = 0; i < CALIBRATION_SAMPLES_NUM; i++) {
+    float diff = samples[i] - meanSample;
+    diffSqr += diff * diff;
+  }
+
+  float stdSample = sqrtf(diffSqr / (float(CALIBRATION_SAMPLES_NUM)));
+  Serial.print("std: ");
+  Serial.print(stdSample, 3);
+  Serial.print(", mean: ");
+  Serial.println(meanSample, 3);
+  boolean stable = stdSample <= CALIBRATION_STABILITY_CRITERIA;
+  if (stable) {
+    gyroZbias = meanSample;
+  }
+  gyroCalibrated = stable;
 }
 
 void Positioning::update(void) {
@@ -34,9 +66,9 @@ void Positioning::update(void) {
   float dt = 0.001 * (float)(newTime - lastTime);
   lastTime = newTime;
   IMU.readSensor();
-  //Serial.print(180 / 3.14159 * IMU.getGyroZ_rads(), 6);
-  //Serial.print("\t");
-  angVelRad = IMU.getGyroZ_rads() - gyroZbias;
-  headingRad += dt * angVelRad;
-  //Serial.println(180 / 3.14159 * headingRad, 6);
+  // Serial.print(180 / 3.14159 * IMU.getGyroZ_rads(), 6);
+  // Serial.print("\t");
+  angVel = (180.0f / 3.14159f) * IMU.getGyroZ_rads() - gyroZbias;
+  heading += dt * angVel;
+  // Serial.println(heading, 6);
 }

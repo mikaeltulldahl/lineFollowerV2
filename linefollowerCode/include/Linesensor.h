@@ -5,8 +5,8 @@
 class Linesensor {
  public:
   enum SensorState { uninitiated, onLine, lostLineRight, lostLineLeft, inAir };
-  SensorState lineSensorState;
-  float lineSensorValue;
+  volatile SensorState lineSensorState;
+  volatile float lineSensorValue;
   Linesensor(int side);
   void init(void);
   void update();
