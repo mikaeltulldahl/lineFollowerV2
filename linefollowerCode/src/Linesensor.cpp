@@ -156,10 +156,33 @@ void Linesensor::updateLine() {
   }
 }
 
-void Linesensor::update() {
+void Linesensor::update(volatile float posX, volatile float posY, volatile float heading) {
   measureAll();
   updateLine();
   updateCalibration();
+
+if (lineSensorState != inAir){
+
+  float length = 0.085f;  // mm
+  float cosHeading = cosf(M_PI/180.0f*heading);
+  float sinHeading = sinf(M_PI/180.0f*heading);
+  float newLineSensorPosX = posX + length*cosHeading - lineSensorValue*sinHeading;
+  float newLineSensorPosY = posY + length*sinHeading + lineSensorValue*cosHeading;
+
+  boolean update = false;
+  if (lineSensorPosX != 0){
+    float diffX = newLineSensorPosX - lineSensorPosX;
+    float diffY = newLineSensorPosY - lineSensorPosY;
+    float distFromPrevious = sqrt(diffX*diffX + diffY*diffY);
+    update = distFromPrevious > 0.02;
+  }
+
+  if(update || lineSensorPosX == 0){
+    lineSensorPosX = newLineSensorPosX;
+    lineSensorPosY = newLineSensorPosY;
+  }
+}
+
 
   /*Serial.print(stateToString(lineSensorState));
   if (lineSensorState == onLine) {

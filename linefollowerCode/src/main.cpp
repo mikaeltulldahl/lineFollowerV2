@@ -138,7 +138,7 @@ void speedControllerThread() {
 void angleControllerThread() {
   while (1) {
     logger.update();
-    linesensor.update();
+    linesensor.update(positioning.posX, positioning.posY, positioning.heading);
     switch (controllerState) {
       case 1:  // init
       case 2:  // reset line calibration, wait to stand still
