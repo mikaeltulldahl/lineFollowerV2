@@ -2,11 +2,15 @@
 #include <SD.h>
 #include <SPI.h>
 #include "Arduino.h"
+#include "Positioning.h"
+#include "Linesensor.h"
 
-File myFile;
+File logFile;
 const int chipSelect = BUILTIN_SDCARD;
 
-Logger::Logger(int i){
+Logger::Logger(Positioning *posObj, Linesensor *lineObj){
+  positioning = posObj;
+  linesensor = lineObj;
 }
 
 void Logger::init() {
@@ -20,14 +24,16 @@ void Logger::init() {
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
-  myFile = SD.open("test.txt", FILE_WRITE);
+  logFile = SD.open("lineLog.txt", FILE_WRITE);
+  logFileOpen = true;
 
   // if the file opened okay, write to it:
-  if (myFile) {
+  if (logFile) {
     Serial.print("Writing to test.txt...");
-    myFile.println("testing 1, 2, 3.");
+    logFile.println("Line log v1");
     // close the file:
-    myFile.close();
+    logFile.close();
+    logFileOpen = false;
     Serial.println("done.");
   } else {
     // if the file didn't open, print an error:
@@ -35,22 +41,55 @@ void Logger::init() {
   }
 
   // re-open the file for reading:
-  myFile = SD.open("test.txt");
-  if (myFile) {
+  logFile = SD.open("test.txt");
+  logFileOpen = true;
+  if (logFile) {
     Serial.println("test.txt:");
 
     // read from the file until there's nothing else in it:
-    while (myFile.available()) {
-      Serial.write(myFile.read());
+    while (logFile.available()) {
+      Serial.write(logFile.read());
     }
     // close the file:
-    myFile.close();
+    logFile.close();
+    logFileOpen = false;
   } else {
     // if the file didn't open, print an error:
     Serial.println("error opening test.txt");
   }
 }
 
-void Logger::update(){
+void Logger::update(int controllerState){
+  switch (controllerState) {
+      case 1:  // init
+      case 2:  // reset line calibration, wait to stand still
+      case 3:  // turn 360 deg
+      case 4:  // center on line
+      if(logFileOpen){
+        logFile.close();
+        logFileOpen = false;
+      }
+      break;
+      case 5:  // running
+      if((*linesensor).lineSensorState == Linesensor::onLine){
+        if (logFile && !logFileOpen){
+          logFile = SD.open("lineLog.txt", FILE_WRITE);
+          logFileOpen = true;
+        }
+        if (logFileOpen){
+          String logString = "t " +(String) millis() + 
+          " v " + (String)(*positioning).velocity +
+          " h " + (String)(*positioning).heading +
+          " x " + (String)(*positioning).posX +
+          " y " + (String)(*positioning).posY +
+          " l " + (String)(*linesensor).lineSensorValue +
+          "\n";
+          logFile.println(logString);
+        }
+      }
+      break;
+    }
+  
+  
 
 }

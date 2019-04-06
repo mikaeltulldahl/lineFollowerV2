@@ -8,6 +8,7 @@ class Positioning {
   void init();
   void update();
   void calibrateGyroBias();
+  void reset();
 
   volatile float heading, angVel, posX, posY;
   volatile boolean gyroCalibrated;

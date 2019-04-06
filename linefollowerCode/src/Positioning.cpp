@@ -10,7 +10,7 @@ MPU9250 IMU(SPI, 10);
 Encoder rightEncoder(2, 3);
 Encoder leftEncoder(30, 29);
 
-#define ENCODER_SCALING (0.030f*3.14159/(10.0f*12.0f))
+#define ENCODER_SCALING (0.030f*M_PI/(10.0f*12.0f))
 
 int status;
 float gyroZbias;
@@ -18,10 +18,10 @@ float gyroZbias;
 Positioning::Positioning(int i) {}
 
 void Positioning::init(void) {
+  reset();
   velocity = 0;
   velocityRight = 0;
   velocityLeft = 0;
-  heading = 0;
   SPI.setMOSI(11);
   SPI.setMISO(12);
   SPI.setSCK(27);
@@ -46,6 +46,14 @@ void Positioning::init(void) {
    distLeft = ENCODER_SCALING*(float)oldPosLeft;
 }
 
+void Positioning::reset(){
+  heading = 0;
+  distRight = 0;
+  distLeft= 0;
+  posX = 0;
+  posY = 0;
+}
+
 void Positioning::calibrateGyroBias() {
 #define CALIBRATION_SAMPLES_NUM 100
 #define CALIBRATION_STABILITY_CRITERIA 0.5f
@@ -53,7 +61,7 @@ void Positioning::calibrateGyroBias() {
   float sum = 0;
   for (int i = 0; i < CALIBRATION_SAMPLES_NUM; i++) {
     //IMU.readSensor();
-    samples[i] = 180.0f / 3.14159f * IMU.getGyroZ_rads();
+    samples[i] = 180.0f / M_PI * IMU.getGyroZ_rads();
     sum += samples[i];
     threads.delay(10);
   }
@@ -83,13 +91,8 @@ void Positioning::update(void) {
   int32_t timeDiff = newTime - previousTime;
   previousTime = newTime;
   IMU.readSensor();
-  // Serial.print(180 / 3.14159 * IMU.getGyroZ_rads(), 6);
-  // Serial.print("\t");
-  angVel = (180.0f / 3.14159f) * IMU.getGyroZ_rads() - gyroZbias;
+  angVel = (180.0f / M_PI) * IMU.getGyroZ_rads() - gyroZbias;
   heading += micros2sec(timeDiff) * angVel;
-  // Serial.println(heading, 6);
-
-
     int32_t newPosRight = rightEncoder.read();
     int32_t newPosLeft = leftEncoder.read();
     distRight = ENCODER_SCALING*(float)newPosRight;
@@ -121,4 +124,6 @@ microsSinceEncoderMovedLeft+=timeDiff;
     float rc = 0.002;
     float alpha = micros2sec(timeDiff)/(rc + micros2sec(timeDiff));
     velocity = (1.0f - alpha)*velocity + alpha*velInstant;
+    posX +=  micros2sec(timeDiff)*velocity*cosf(M_PI/180.0f*heading);
+    posY +=  micros2sec(timeDiff)*velocity*sinf(M_PI/180.0f*heading);
 }
