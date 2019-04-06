@@ -91,7 +91,7 @@ void stateMachinethread() {
 void motorControllerThread() {
   float leftPwm;
   float rightPwm;
-  volatile float Pomega = 0.002;
+  volatile float Pomega = 0.003;
   volatile float Pvel = 1.2;
   while (1) {
     positioning.update();
@@ -128,7 +128,7 @@ void speedControllerThread() {
         referenceSpeed = 0;
         break;
       case 5:  // running
-        referenceSpeed = max(0, 1.3 - 20 * linesensor.lineSensorValue*linesensor.lineSensorValue);
+        referenceSpeed = max(0, 1.9 - 20 * linesensor.lineSensorValue*linesensor.lineSensorValue);
         break;
     }
     threads.delay(2);
@@ -159,10 +159,10 @@ void angleControllerThread() {
           absError = -error;
           signum = -1;
         }
-        referenceAngVelRate = - (50000*absError*absError + 1000*absError)*max(0.3,positioning.velocity)*signum;
+        referenceAngVelRate = - (30000*absError*absError + 5000*absError)*max(0.3,positioning.velocity)*signum;
         break;
     }
-    threads.delay(2);
+    threads.delay(1);
   }
 }
 
