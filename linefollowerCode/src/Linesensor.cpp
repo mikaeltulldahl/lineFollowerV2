@@ -125,8 +125,10 @@ void Linesensor::updateLine() {
       case onLine:
         if (lineSensorValue > 0) {
           lineSensorState = lostLineLeft;
+          lineSensorValue = getSensorPos(SENSOR_COUNT);
         } else {
           lineSensorState = lostLineRight;
+          lineSensorValue = getSensorPos(0);
         }
         break;
       case lostLineRight:

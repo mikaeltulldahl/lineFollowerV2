@@ -33,8 +33,8 @@ void Motor::set(float pwm) {
 }
 
 float Motor::saturate(float in) {
-  if (in > 1) {
-    return 1;
+  if (in > 0.5) {
+    return 0.5;
   } else {
     return in;
   }

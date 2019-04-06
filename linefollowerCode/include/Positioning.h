@@ -11,6 +11,11 @@ class Positioning {
 
   volatile float heading, angVel, posX, posY;
   volatile boolean gyroCalibrated;
+  volatile float velocity, velocityRight, velocityLeft, distRight, distLeft;
+  private:
+  volatile int32_t previousTime;
+  volatile int32_t oldPosRight, oldPosLeft;
+  volatile int32_t microsSinceEncoderMovedRight,microsSinceEncoderMovedLeft;
 };
 
 #endif /* POSITIONING_H_ */

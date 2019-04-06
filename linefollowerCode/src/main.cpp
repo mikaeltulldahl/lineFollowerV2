@@ -42,6 +42,7 @@ void stateMachinethread() {
         }
         break;
       case 2:  // reset line calibration, wait to stand still
+      positioning.calibrateGyroBias();
       if(linesensor.lineSensorState == Linesensor::inAir){
         controllerState = 1;
         Serial.println("return to init");
@@ -64,7 +65,7 @@ void stateMachinethread() {
         controllerState = 1;
         Serial.println("return to init");
       }else if (linesensor.lineSensorState == Linesensor::onLine &&
-            fabs(linesensor.lineSensorValue) < 0.01 &&
+            fabs(linesensor.lineSensorValue) < 0.03 &&
             fabs(positioning.angVel < 1)) {
           positioning.heading = 0;
           controllerState++;
@@ -90,7 +91,8 @@ void stateMachinethread() {
 void motorControllerThread() {
   float leftPwm;
   float rightPwm;
-  volatile float Pomega = 0.01;  // 0.05;
+  volatile float Pomega = 0.002;
+  volatile float Pvel = 1.2;
   while (1) {
     positioning.update();
     switch (controllerState) {
@@ -98,16 +100,18 @@ void motorControllerThread() {
       case 2:  // reset line calibration, wait to stand still
         leftPwm = 0;
         rightPwm = 0;
-        positioning.calibrateGyroBias();
         break;
       case 3:  // turn 360 deg
       case 4:  // center on line
       case 5:  // running
       default:
-        leftPwm = referenceSpeed - Pomega * (positioning.angVel - referenceAngVelRate);
-        rightPwm = referenceSpeed + Pomega * (positioning.angVel - referenceAngVelRate);
+      float speedError = referenceSpeed - positioning.velocity;
+      float angVelError = positioning.angVel - referenceAngVelRate;
+        leftPwm = Pvel * speedError - Pomega * angVelError;
+        rightPwm = Pvel * speedError + Pomega * angVelError;
         break;
     }
+
     rightMotor.set(rightPwm);
     leftMotor.set(leftPwm);
     threads.yield();
@@ -124,7 +128,7 @@ void speedControllerThread() {
         referenceSpeed = 0;
         break;
       case 5:  // running
-        referenceSpeed = max(0, 0.2 - 10 * fabs(linesensor.lineSensorValue));
+        referenceSpeed = max(0, 1.3 - 20 * linesensor.lineSensorValue*linesensor.lineSensorValue);
         break;
     }
     threads.delay(2);
@@ -155,26 +159,7 @@ void angleControllerThread() {
           absError = -error;
           signum = -1;
         }
-
-        float curvature;
-        if (absError > length) {
-          curvature = 1.0f / length;
-        } else {
-          // radius = (e^2 + y^2)/(2*e) = 1/curvature
-          curvature = (2 * absError) / (absError * absError + length * length);
-        }
-
-        // omega = velocity/radius = velocity*curvature;
-        float speed = 0.7;
-        referenceAngVelRate = 180 / 3.14 * (-speed * curvature * signum);
-        //		if (lineSensorState==lostLineLeft){
-        //			leftPwm = 0;
-        //			rightPwm = -0.5;
-        //		}
-        //		if (lineSensorState==lostLineRight){
-        //			leftPwm = -0.5;
-        //			rightPwm = 0;
-        //		}
+        referenceAngVelRate = - (50000*absError*absError + 1000*absError)*max(0.3,positioning.velocity)*signum;
         break;
     }
     threads.delay(2);
