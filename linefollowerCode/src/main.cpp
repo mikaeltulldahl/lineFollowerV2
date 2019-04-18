@@ -48,31 +48,31 @@ void stateMachinethread() {
         }
         break;
       case LINE_CALIB_RESET:  // wait to stand still
-      positioning.calibrateGyroBias();
-      if(linesensor.lineSensorState == Linesensor::inAir){
-        controllerState = INIT;
-        Serial.println("return to init");
-      }else if (positioning.gyroCalibrated) {
-        Serial.println("gyro calibrated");
+        positioning.calibrateGyroBias();
+        if (linesensor.lineSensorState == Linesensor::inAir) {
+          controllerState = INIT;
+          Serial.println("return to init");
+        } else if (positioning.gyroCalibrated) {
+          Serial.println("gyro calibrated");
           positioning.heading = 0;
           controllerState++;
         }
         break;
       case TURN_360:
-        if(linesensor.lineSensorState == Linesensor::inAir){
-        controllerState = INIT;
-        Serial.println("return to init");
-      }else if (fabs(positioning.heading) >= 360) {
+        if (linesensor.lineSensorState == Linesensor::inAir) {
+          controllerState = INIT;
+          Serial.println("return to init");
+        } else if (fabs(positioning.heading) >= 360) {
           controllerState++;
         }
         break;
       case CENTER_ON_LINE:
-        if(linesensor.lineSensorState == Linesensor::inAir){
-        controllerState = INIT;
-        Serial.println("return to init");
-      }else if (linesensor.lineSensorState == Linesensor::onLine &&
-            fabs(linesensor.lineSensorValue) < 0.03 &&
-            fabs(positioning.angVel < 1)) {
+        if (linesensor.lineSensorState == Linesensor::inAir) {
+          controllerState = INIT;
+          Serial.println("return to init");
+        } else if (linesensor.lineSensorState == Linesensor::onLine &&
+                   fabs(linesensor.lineSensorValue) < 0.03 &&
+                   fabs(positioning.angVel < 1)) {
           positioning.reset();
           controllerState++;
         }
@@ -80,13 +80,13 @@ void stateMachinethread() {
       case RUNNING:
         if (linesensor.lineSensorState == Linesensor::inAir ||
             linesensor.lineSensorState == Linesensor::uninitiated) {
-                  controllerState = INIT;
-        Serial.println("return to init");
+          controllerState = INIT;
+          Serial.println("return to init");
         }
         break;
         // state: lost line -> if lost more than 200ms, go to init
       default:
-                controllerState = INIT;
+        controllerState = INIT;
         Serial.println("unknown state");
         break;
     }
@@ -111,8 +111,8 @@ void motorControllerThread() {
       case CENTER_ON_LINE:
       case RUNNING:
       default:
-      float speedError = referenceSpeed - positioning.velocity;
-      float angVelError = positioning.angVel - referenceAngVelRate;
+        float speedError = referenceSpeed - positioning.velocity;
+        float angVelError = positioning.angVel - referenceAngVelRate;
         leftPwm = Pvel * speedError - Pomega * angVelError;
         rightPwm = Pvel * speedError + Pomega * angVelError;
         break;
@@ -133,7 +133,8 @@ void speedControllerThread() {
         referenceSpeed = 0;
         break;
       case RUNNING:
-        referenceSpeed = max(0, 1.9 - 20 * linesensor.lineSensorValue*linesensor.lineSensorValue);
+        referenceSpeed = max(0, 1.9 - 20 * linesensor.lineSensorValue *
+                                          linesensor.lineSensorValue);
         break;
     }
     threads.delay(2);
@@ -163,7 +164,8 @@ void angleControllerThread() {
           absError = -error;
           signum = -1;
         }
-        referenceAngVelRate = - (30000*absError*absError + 5000*absError)*max(0.3,positioning.velocity)*signum;
+        referenceAngVelRate = -(30000 * absError * absError + 5000 * absError) *
+                              max(0.3, positioning.velocity) * signum;
         break;
     }
     threads.delay(1);

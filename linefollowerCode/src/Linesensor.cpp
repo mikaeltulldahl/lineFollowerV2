@@ -74,9 +74,9 @@ void Linesensor::updateCalibration() {
         sensorMaxs[i] = adc_value[i];
       } else if (adc_value[i] < sensorMins[i]) {
         sensorMins[i] = adc_value[i];
-      } //else if (sensorRange[i] > 2) {
-        //sensorMaxs[i] -= 1;
-        //sensorMins[i] += 1;
+      }  // else if (sensorRange[i] > 2) {
+         // sensorMaxs[i] -= 1;
+         // sensorMins[i] += 1;
       //}
 
       int diff = sensorMaxs[i] - sensorMins[i];
@@ -156,33 +156,35 @@ void Linesensor::updateLine() {
   }
 }
 
-void Linesensor::update(volatile float posX, volatile float posY, volatile float heading) {
+void Linesensor::update(volatile float posX,
+                        volatile float posY,
+                        volatile float heading) {
   measureAll();
   updateLine();
   updateCalibration();
 
-if (lineSensorState != inAir){
+  if (lineSensorState != inAir) {
+    float length = 0.085f;  // mm
+    float cosHeading = cosf(M_PI / 180.0f * heading);
+    float sinHeading = sinf(M_PI / 180.0f * heading);
+    float newLineSensorPosX =
+        posX + length * cosHeading - lineSensorValue * sinHeading;
+    float newLineSensorPosY =
+        posY + length * sinHeading + lineSensorValue * cosHeading;
 
-  float length = 0.085f;  // mm
-  float cosHeading = cosf(M_PI/180.0f*heading);
-  float sinHeading = sinf(M_PI/180.0f*heading);
-  float newLineSensorPosX = posX + length*cosHeading - lineSensorValue*sinHeading;
-  float newLineSensorPosY = posY + length*sinHeading + lineSensorValue*cosHeading;
+    boolean update = false;
+    if (lineSensorPosX != 0) {
+      float diffX = newLineSensorPosX - lineSensorPosX;
+      float diffY = newLineSensorPosY - lineSensorPosY;
+      float distFromPrevious = sqrt(diffX * diffX + diffY * diffY);
+      update = distFromPrevious > 0.02;
+    }
 
-  boolean update = false;
-  if (lineSensorPosX != 0){
-    float diffX = newLineSensorPosX - lineSensorPosX;
-    float diffY = newLineSensorPosY - lineSensorPosY;
-    float distFromPrevious = sqrt(diffX*diffX + diffY*diffY);
-    update = distFromPrevious > 0.02;
+    if (update || lineSensorPosX == 0) {
+      lineSensorPosX = newLineSensorPosX;
+      lineSensorPosY = newLineSensorPosY;
+    }
   }
-
-  if(update || lineSensorPosX == 0){
-    lineSensorPosX = newLineSensorPosX;
-    lineSensorPosY = newLineSensorPosY;
-  }
-}
-
 
   /*Serial.print(stateToString(lineSensorState));
   if (lineSensorState == onLine) {

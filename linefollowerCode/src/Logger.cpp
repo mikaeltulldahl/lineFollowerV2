@@ -2,13 +2,13 @@
 #include <SD.h>
 #include <SPI.h>
 #include "Arduino.h"
-#include "Positioning.h"
 #include "Linesensor.h"
+#include "Positioning.h"
 
 File logFile;
 const int chipSelect = BUILTIN_SDCARD;
 
-Logger::Logger(Positioning *posObj, Linesensor *lineObj){
+Logger::Logger(Positioning* posObj, Linesensor* lineObj) {
   positioning = posObj;
   linesensor = lineObj;
 }
@@ -59,37 +59,35 @@ void Logger::init() {
   }
 }
 
-void Logger::update(int controllerState){
+void Logger::update(int controllerState) {
   switch (controllerState) {
-      case 1:  // init
-      case 2:  // reset line calibration, wait to stand still
-      case 3:  // turn 360 deg
-      case 4:  // center on line
-      if(logFileOpen){
+    case 1:  // init
+    case 2:  // reset line calibration, wait to stand still
+    case 3:  // turn 360 deg
+    case 4:  // center on line
+      if (logFileOpen) {
         logFile.close();
         logFileOpen = false;
       }
       break;
-      case 5:  // running
-      if((*linesensor).lineSensorState == Linesensor::onLine){
-        if (logFile && !logFileOpen){
+    case 5:  // running
+      if ((*linesensor).lineSensorState == Linesensor::onLine) {
+        if (logFile && !logFileOpen) {
           logFile = SD.open("lineLog.txt", FILE_WRITE);
           logFileOpen = true;
         }
-        if (logFileOpen){
-          String logString = "t " +(String) millis() + 
-          " v " + (String)(*positioning).velocity +
-          " h " + (String)(*positioning).heading +
-          " x " + (String)(*positioning).posX +
-          " y " + (String)(*positioning).posY +
-          " l " + (String)(*linesensor).lineSensorValue +
-          "\n";
+        if (logFileOpen) {
+          String logString = "t " + (String)millis() + " v " +
+                             (String)(*positioning).velocity + " h " +
+                             (String)(*positioning).heading + " px " +
+                             (String)(*positioning).posX + " py " +
+                             (String)(*positioning).posY + " dr " +
+                             (String)(*positioning).distRight + " dl " +
+                             (String)(*positioning).distLeft + " l " +
+                             (String)(*linesensor).lineSensorValue + "\n";
           logFile.println(logString);
         }
       }
       break;
-    }
-  
-  
-
+  }
 }
