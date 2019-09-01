@@ -1,4 +1,5 @@
 #include "Linesensor.h"
+#include "Positioning.h"
 #include <ADC.h>
 #include <Arduino.h>
 
@@ -26,7 +27,8 @@ int adc_value[SENSOR_COUNT];
 
 ADC* adc = new ADC();  // adc object
 
-Linesensor::Linesensor(int i) {
+Linesensor::Linesensor(Positioning* posObj) {
+  positioning = posObj;
   lineSensorState = SensorState::uninitiated;
 }
 
@@ -156,19 +158,17 @@ void Linesensor::updateLine() {
   }
 }
 
-void Linesensor::update(volatile float posX,
-                        volatile float posY,
-                        volatile float heading) {
+void Linesensor::update() {
   measureAll();
   updateLine();
   updateCalibration();
 
   if (lineSensorState != inAir) {
     float length = 0.085f;  // mm
-    float cosHeading = cosf(M_PI / 180.0f * heading);
-    float sinHeading = sinf(M_PI / 180.0f * heading);
-    lineSensorPosX = posX + length * cosHeading - lineSensorValue * sinHeading;
-    lineSensorPosY = posY + length * sinHeading + lineSensorValue * cosHeading;
+    float cosHeading = cosf(M_PI / 180.0f * positioning->heading);
+    float sinHeading = sinf(M_PI / 180.0f * positioning->heading);
+    lineSensorPosX = positioning->getPosX() + length * cosHeading - lineSensorValue * sinHeading;
+    lineSensorPosY = positioning->getPosY() + length * sinHeading + lineSensorValue * cosHeading;
   }
 
     // printAsciiLineValue();

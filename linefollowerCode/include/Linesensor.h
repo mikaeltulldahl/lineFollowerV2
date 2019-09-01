@@ -1,6 +1,7 @@
 #ifndef LINESENSOR_H
 #define LINESENSOR_H
 #include "Arduino.h"
+#include "Positioning.h"
 
 class Linesensor {
  public:
@@ -10,11 +11,12 @@ class Linesensor {
   volatile float lineHeading;
   volatile float lineSensorPosX;
   volatile float lineSensorPosY;
-  Linesensor(int side);
+  Linesensor(Positioning* posObj);
   void init(void);
-  void update(volatile float posX, volatile float posY, volatile float heading);
+  void update();
 
  private:
+ Positioning* positioning;
   void measureAll(void);
   void updateCalibration(void);
   void updateLine(void);

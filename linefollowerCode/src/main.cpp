@@ -9,8 +9,8 @@ int ledPin = 13;
 
 Motor rightMotor(0);
 Motor leftMotor(1);
-Positioning positioning(0);
-Linesensor linesensor(0);
+Positioning positioning;
+Linesensor linesensor(&positioning);
 Logger logger(&positioning, &linesensor);
 
 volatile int controllerState = 1;  // init = 0, running = 1
@@ -143,7 +143,7 @@ void speedControllerThread() {
 
 void angleControllerThread() {
   while (1) {
-    linesensor.update(positioning.getPosX(), positioning.getPosY(), positioning.heading);
+    linesensor.update();
     switch (controllerState) {
       case INIT:
       case LINE_CALIB_RESET:

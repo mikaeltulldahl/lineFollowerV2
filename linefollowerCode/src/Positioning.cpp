@@ -17,7 +17,7 @@ EncoderHelper leftEncoder(30, 29);
 int status;
 float gyroZbias;
 
-Positioning::Positioning(int i) {}
+Positioning::Positioning() {}
 
 void Positioning::init(void) {
   SPI.setMOSI(11);

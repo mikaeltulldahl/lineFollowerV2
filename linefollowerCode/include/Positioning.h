@@ -5,7 +5,7 @@
 
 class Positioning {
  public:
-  Positioning(int i);
+  Positioning();
   void init();
   void update();
   void calibrateGyroBias();
