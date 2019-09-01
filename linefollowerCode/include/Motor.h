@@ -1,5 +1,5 @@
-#ifndef MOTOR_H_
-#define MOTOR_H_
+#ifndef MOTOR_H
+#define MOTOR_H
 
 class Motor {
  public:
@@ -12,4 +12,4 @@ class Motor {
   int _dirPin, _pwmPin;
   bool _forwardDir;
 };
-#endif /* MOTOR_H_ */
+#endif /* MOTOR_H */

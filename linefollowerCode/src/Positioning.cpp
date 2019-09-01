@@ -1,16 +1,18 @@
 #include "Positioning.h"
 #include <Arduino.h>
-#include <Encoder.h>
 #include <MPU9250.h>
 #include <SPI.h>
 #include <TeensyThreads.h>
+#include "EncoderHelper.h"
 
 MPU9250 IMU(SPI, 10);
 
-Encoder rightEncoder(2, 3);
-Encoder leftEncoder(30, 29);
+EncoderHelper rightEncoder(2, 3);
+EncoderHelper leftEncoder(30, 29);
 
-#define ENCODER_SCALING (0.030f * M_PI / (10.0f * 12.0f))
+#define micros2sec(micros) (0.000001f * ((float)micros))
+#define CALIBRATION_SAMPLES_NUM 100
+#define CALIBRATION_STABILITY_CRITERIA 0.5f
 
 int status;
 float gyroZbias;
@@ -18,10 +20,6 @@ float gyroZbias;
 Positioning::Positioning(int i) {}
 
 void Positioning::init(void) {
-  reset();
-  velocity = 0;
-  velocityRight = 0;
-  velocityLeft = 0;
   SPI.setMOSI(11);
   SPI.setMISO(12);
   SPI.setSCK(27);
@@ -38,25 +36,19 @@ void Positioning::init(void) {
   gyroCalibrated = false;
   // calibrateGyroBias();
   previousTime = (int32_t)micros();
-  microsSinceEncoderMovedRight = 0;
-  microsSinceEncoderMovedLeft = 0;
-  oldPosRight = rightEncoder.read();
-  oldPosLeft = leftEncoder.read();
-  distRight = ENCODER_SCALING * (float)oldPosRight;
-  distLeft = ENCODER_SCALING * (float)oldPosLeft;
+  reset();
 }
 
 void Positioning::reset() {
+  rightEncoder.reset();
+  leftEncoder.reset();
   heading = 0;
-  distRight = 0;
-  distLeft = 0;
+  velocity = 0;
   posX = 0;
   posY = 0;
 }
 
 void Positioning::calibrateGyroBias() {
-#define CALIBRATION_SAMPLES_NUM 100
-#define CALIBRATION_STABILITY_CRITERIA 0.5f
   float samples[CALIBRATION_SAMPLES_NUM];
   float sum = 0;
   for (int i = 0; i < CALIBRATION_SAMPLES_NUM; i++) {
@@ -84,46 +76,33 @@ void Positioning::calibrateGyroBias() {
   gyroCalibrated = stable;
 }
 
-#define micros2sec(micros) (0.000001f * ((float)micros))
-
 void Positioning::update(void) {
   int32_t newTime = (int32_t)micros();
   int32_t timeDiff = newTime - previousTime;
   previousTime = newTime;
   IMU.readSensor();
-  angVel = (180.0f / M_PI) * IMU.getGyroZ_rads() - gyroZbias;
+  angVel = -((180.0f / M_PI) * IMU.getGyroZ_rads() - gyroZbias);
   heading += micros2sec(timeDiff) * angVel;
-  int32_t newPosRight = rightEncoder.read();
-  int32_t newPosLeft = leftEncoder.read();
-  distRight = ENCODER_SCALING * (float)newPosRight;
-  distLeft = ENCODER_SCALING * (float)newPosLeft;
+  float dPosRight = rightEncoder.update();
+  float dPosLeft = leftEncoder.update();
+  float dPos = 0.5f * (dPosRight + dPosLeft);
+  velocity = 0.5f * (rightEncoder.velocity + leftEncoder.velocity);
+  posX += dPos * cosf(M_PI / 180.0f * heading);
+  posY += dPos * sinf(M_PI / 180.0f * heading);
+}
 
-  microsSinceEncoderMovedRight += timeDiff;
-  if (newPosRight != oldPosRight) {
-    float dPosRight = ENCODER_SCALING * ((float)(newPosRight - oldPosRight));
-    oldPosRight = newPosRight;
-    velocityRight = (float)dPosRight / micros2sec(microsSinceEncoderMovedRight);
-    microsSinceEncoderMovedRight = 0;
-  }
-  if (micros2sec(microsSinceEncoderMovedRight) > 0.1f) {
-    velocityRight = 0;
-  }
+int32_t Positioning::getDistRight() {
+  return rightEncoder.dist;
+}
 
-  microsSinceEncoderMovedLeft += timeDiff;
-  if (newPosLeft != oldPosLeft) {
-    float dPosLeft = ENCODER_SCALING * ((float)(newPosLeft - oldPosLeft));
-    oldPosLeft = newPosLeft;
-    velocityLeft = (float)dPosLeft / micros2sec(microsSinceEncoderMovedLeft);
-    microsSinceEncoderMovedLeft = 0;
-  }
-  if (micros2sec(microsSinceEncoderMovedLeft) > 0.1f) {
-    velocityLeft = 0;
-  }
+int32_t Positioning::getDistLeft() {
+  return leftEncoder.dist;
+}
 
-  float velInstant = 0.5f * (velocityRight + velocityLeft);
-  float rc = 0.002;
-  float alpha = micros2sec(timeDiff) / (rc + micros2sec(timeDiff));
-  velocity = (1.0f - alpha) * velocity + alpha * velInstant;
-  posX += micros2sec(timeDiff) * velocity * cosf(M_PI / 180.0f * heading);
-  posY += micros2sec(timeDiff) * velocity * sinf(M_PI / 180.0f * heading);
+float Positioning::getPosX() {
+  return posX;
+}
+
+float Positioning::getPosY() {
+  return posY;
 }

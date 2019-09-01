@@ -113,8 +113,8 @@ void motorControllerThread() {
       default:
         float speedError = referenceSpeed - positioning.velocity;
         float angVelError = positioning.angVel - referenceAngVelRate;
-        leftPwm = Pvel * speedError - Pomega * angVelError;
-        rightPwm = Pvel * speedError + Pomega * angVelError;
+        leftPwm = Pvel * speedError + Pomega * angVelError;
+        rightPwm = Pvel * speedError - Pomega * angVelError;
         break;
     }
     rightMotor.set(rightPwm);
@@ -143,7 +143,7 @@ void speedControllerThread() {
 
 void angleControllerThread() {
   while (1) {
-    linesensor.update(positioning.posX, positioning.posY, positioning.heading);
+    linesensor.update(positioning.getPosX(), positioning.getPosY(), positioning.heading);
     switch (controllerState) {
       case INIT:
       case LINE_CALIB_RESET:
@@ -164,7 +164,7 @@ void angleControllerThread() {
           absError = -error;
           signum = -1;
         }
-        referenceAngVelRate = -(30000 * absError * absError + 5000 * absError) *
+        referenceAngVelRate = (30000 * absError * absError + 5000 * absError) *
                               max(0.3, positioning.velocity) * signum;
         break;
     }
@@ -182,6 +182,7 @@ void loggerThread() {
 void setup() {
   digitalWrite(ledPin, HIGH);
   Serial.begin(115200);
+  delay(5000);
   digitalWrite(ledPin, LOW);
   Serial.println("START");
   threads.setDefaultTimeSlice(1);
@@ -189,6 +190,7 @@ void setup() {
   logger.init();
   positioning.init();
   linesensor.init();
+  Serial.println("INIT DONE");
   threads.addThread(blinkthread);
   threads.addThread(stateMachinethread);
   threads.addThread(angleControllerThread);

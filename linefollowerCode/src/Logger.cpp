@@ -5,19 +5,16 @@
 #include "Linesensor.h"
 #include "Positioning.h"
 
-File logFile;
-bool sdInitialized = false;
-const int chipSelect = BUILTIN_SDCARD;
-
 Logger::Logger(Positioning* posObj, Linesensor* lineObj) {
   positioning = posObj;
   linesensor = lineObj;
+  sdInitialized = false;
 }
 
 void Logger::init() {
   Serial.print("Initializing SD card...");
 
-  if (!SD.begin(chipSelect)) {
+  if (!SD.begin(BUILTIN_SDCARD)) {
     Serial.println("initialization failed!");
     return;
   } else {
@@ -25,15 +22,23 @@ void Logger::init() {
     sdInitialized = true;
   }
 
-  logFile = SD.open("lineLog.txt", FILE_WRITE);
+  // Find unique log name
+  int logIdx = 0;
+  do {
+    sprintf(logFileName, "log%03d.txt", logIdx);
+    logIdx++;
+  } while (SD.exists(logFileName) && logIdx < 999);
+  Serial.print("logfile name: ");
+  Serial.println(logFileName);
 
+  logFile = SD.open(logFileName, FILE_WRITE);
   if (logFile) {
-    Serial.print("Writing to lineLog.txt...");
     logFile.println("------------- new log ---------------");
     logFile.close();
     Serial.println("done.");
   } else {
-    Serial.println("error opening lineLog.txt");
+    Serial.print("error opening ");
+    Serial.println(logFileName);
   }
 }
 
@@ -44,24 +49,27 @@ void Logger::update(int controllerState) {
     case 3:  // turn 360 deg
     case 4:  // center on line
       if (sdInitialized && logFile) {
+        logFile.println("stop");
         logFile.close();
         Serial.println("logfile closed");
       }
       break;
     case 5:  // running
-      if ((*linesensor).lineSensorState == Linesensor::onLine) {
+      if (linesensor->lineSensorState == Linesensor::onLine) {
         if (sdInitialized && !logFile) {
-          logFile = SD.open("lineLog.txt", FILE_WRITE);
-          Serial.println("logfile opened");
+          logFile = SD.open(logFileName, FILE_WRITE);
+          if (logFile) {
+            logFile.println("start");
+            Serial.println("logfile opened");
+          }
         }
         if (sdInitialized && logFile) {
-          String logString =
-              (String)millis() + (String)(*positioning).velocity +
-              (String)(*positioning).heading + (String)(*positioning).posX +
-              (String)(*positioning).posY + (String)(*positioning).distRight +
-              (String)(*positioning).distLeft +
-              (String)(*linesensor).lineSensorValue;
-          logFile.println(logString);
+          logFile.printf("%6lu,%5.2f,%6.1f,%6.3f,%6.3f,%6ld,%6ld,%d,%6.3f,%6.3f,%6.3f", millis(),
+                  positioning->velocity, positioning->heading,
+                  positioning->getPosX(), positioning->getPosY(),
+                  positioning->getDistRight(), positioning->getDistLeft(),
+                  linesensor->lineSensorState, linesensor->lineSensorValue,
+                  linesensor->lineSensorPosX, linesensor->lineSensorPosY);
         }
       }
       break;

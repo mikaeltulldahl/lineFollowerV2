@@ -8,6 +8,8 @@ class Linesensor {
   volatile SensorState lineSensorState;
   volatile float lineSensorValue;
   volatile float lineHeading;
+  volatile float lineSensorPosX;
+  volatile float lineSensorPosY;
   Linesensor(int side);
   void init(void);
   void update(volatile float posX, volatile float posY, volatile float heading);
@@ -17,8 +19,9 @@ class Linesensor {
   void updateCalibration(void);
   void updateLine(void);
   String stateToString(SensorState i);
-  volatile float lineSensorPosX;
-  volatile float lineSensorPosY;
+  void printAsciiLineValue();
+  void printAsciiMeasurments();
+  void printVolts();
 };
 
 #endif /* LINESENSOR_H */

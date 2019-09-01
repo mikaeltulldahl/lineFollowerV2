@@ -167,65 +167,14 @@ void Linesensor::update(volatile float posX,
     float length = 0.085f;  // mm
     float cosHeading = cosf(M_PI / 180.0f * heading);
     float sinHeading = sinf(M_PI / 180.0f * heading);
-    float newLineSensorPosX =
-        posX + length * cosHeading - lineSensorValue * sinHeading;
-    float newLineSensorPosY =
-        posY + length * sinHeading + lineSensorValue * cosHeading;
-
-    boolean update = false;
-    if (lineSensorPosX != 0) {
-      float diffX = newLineSensorPosX - lineSensorPosX;
-      float diffY = newLineSensorPosY - lineSensorPosY;
-      float distFromPrevious = sqrt(diffX * diffX + diffY * diffY);
-      update = distFromPrevious > 0.02;
-    }
-
-    if (update || lineSensorPosX == 0) {
-      lineSensorPosX = newLineSensorPosX;
-      lineSensorPosY = newLineSensorPosY;
-    }
+    lineSensorPosX = posX + length * cosHeading - lineSensorValue * sinHeading;
+    lineSensorPosY = posY + length * sinHeading + lineSensorValue * cosHeading;
   }
 
-  /*Serial.print(stateToString(lineSensorState));
-  if (lineSensorState == onLine) {
-    Serial.print("<");
-    Serial.print(lineSensorValue, 1);
-    Serial.print(">");
-    for (int i = -100; i < 100; i++) {
-      if ((int)round(lineSensorValue) == i) {
-        Serial.print("#");
-      } else {
-        Serial.print("_");
-      }
-    }
-  }
-  Serial.println();*/
-
-  /*Serial.print("<");
-  Serial.print(adc->analogRead(adc_pins[0]) * VREF / adc->getMaxValue(ADC_0),
-               1);
-  Serial.println(">");*/
-
-  /*(int i = 0; i < SENSOR_COUNT; i++) {
-    if (getSensorReadingNormalized(i) > 0.5f) {
-      Serial.print("#");
-    } else {
-      Serial.print(" ");
-    }
-  }
-  Serial.println(">");*/
-
-  /*  for (int i=0;i<SENSOR_COUNT;i++) {
-        value[i] = adc->analogRead(adc_pins[i]); // read a new value, will
-    return ADC_ERROR_VALUE if the comparison is false. Serial.print("A");
-        Serial.print(i);
-        Serial.print(": ");
-        float volt = (float)value[i]*VREF/(float)adc->getMaxValue(ADC_0);
-        Serial.print(value[i]*VREF/adc->getMaxValue(ADC_0), 1);
-        Serial.print(". ");
-    }
-    Serial.println();
-  */
+    // printAsciiLineValue();
+    // printAsciiMeasurments();
+    // printVolts();
+  
 }
 
 String Linesensor::stateToString(SensorState i) {
@@ -248,4 +197,38 @@ String Linesensor::stateToString(SensorState i) {
     default:
       return "";
   }
+}
+
+void Linesensor::printAsciiLineValue() {
+  Serial.print("<");
+  for (int i = -100; i < 100; i++) {
+    if ((int)round(lineSensorValue) == i) {
+      Serial.print("#");
+    } else {
+      Serial.print("_");
+    }
+  }
+  Serial.println(">");
+}
+
+void Linesensor::printAsciiMeasurments(){
+  Serial.print("<");
+  for(int i = 0; i < SENSOR_COUNT; i++) {
+    if (getSensorReadingNormalized(i) > 0.5f) {
+      Serial.print("#");
+    } else {
+      Serial.print("_");
+    }
+  }
+  Serial.println(">");
+}
+
+void Linesensor::printVolts(){
+  for (int i=0;i<SENSOR_COUNT;i++) {
+        Serial.print(i);
+        Serial.print(": ");
+        Serial.print(getVolt(adc_value[i]),1);
+        Serial.print(" ");
+    }
+    Serial.println();
 }

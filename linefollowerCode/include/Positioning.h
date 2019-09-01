@@ -1,6 +1,7 @@
 #ifndef POSITIONING_H_
 #define POSITIONING_H_
 #include <Arduino.h>
+#include "EncoderHelper.h"
 
 class Positioning {
  public:
@@ -9,15 +10,17 @@ class Positioning {
   void update();
   void calibrateGyroBias();
   void reset();
-
-  volatile float heading, angVel, posX, posY;
+  float getPosX();
+  float getPosY();
+  int32_t getDistRight();
+  int32_t getDistLeft();
+  volatile float heading, angVel;
   volatile boolean gyroCalibrated;
-  volatile float velocity, velocityRight, velocityLeft, distRight, distLeft;
+  volatile float velocity;
 
  private:
+  volatile float posX, posY;
   volatile int32_t previousTime;
-  volatile int32_t oldPosRight, oldPosLeft;
-  volatile int32_t microsSinceEncoderMovedRight, microsSinceEncoderMovedLeft;
 };
 
 #endif /* POSITIONING_H_ */

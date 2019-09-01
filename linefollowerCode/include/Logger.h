@@ -1,8 +1,9 @@
-#ifndef LOGGER_h
-#define LOGGER_h
+#ifndef LOGGER_H
+#define LOGGER_H
 #include "Arduino.h"
 #include "Linesensor.h"
 #include "Positioning.h"
+#include <SD.h>
 
 class Logger {
  public:
@@ -13,7 +14,10 @@ class Logger {
  private:
   Positioning* positioning;
   Linesensor* linesensor;
+  char logFileName[20];
+  File logFile;
+  bool sdInitialized;
   bool logFileOpen;
 };
 
-#endif /* LOGGER_h */
+#endif /* LOGGER_H */
