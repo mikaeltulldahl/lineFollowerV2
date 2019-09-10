@@ -5,6 +5,9 @@
 #include "Motor.h"
 #include "Positioning.h"
 
+volatile uint32_t idleCounter = 0;
+int32_t millisSinceCPULoadUpdate = 0;
+int32_t cpuLoadUpdateRate = 5;  // sec
 int ledPin = 13;
 
 Motor rightMotor(0);
@@ -119,7 +122,7 @@ void motorControllerThread() {
     }
     rightMotor.set(rightPwm);
     leftMotor.set(leftPwm);
-    threads.yield();
+    threads.delay(1);
   }
 }
 
@@ -179,6 +182,28 @@ void loggerThread() {
   }
 }
 
+void idleThread() {
+  while (1) {
+    int32_t dt = (int32_t)millis() - millisSinceCPULoadUpdate;
+    if (dt >= 1000 * cpuLoadUpdateRate) {
+      Serial.print("free cpu: ");
+      Serial.print(idleCounter / 100);
+      Serial.println("%");
+      idleCounter = 0;
+      millisSinceCPULoadUpdate += dt;
+    }
+
+    // do some pointless heavy lifting to burn cpu cycles;
+    for (volatile int i = 0; i < 311 * cpuLoadUpdateRate; i++) {
+      volatile float a = 123;
+      volatile float b = sqrtf(a);
+      (void) b;//to suppress [-Wunused-variable] warning
+    }
+    idleCounter++;
+    threads.yield();
+  }
+}
+
 void setup() {
   digitalWrite(ledPin, HIGH);
   Serial.begin(115200);
@@ -197,6 +222,7 @@ void setup() {
   threads.addThread(speedControllerThread);
   threads.addThread(motorControllerThread);
   threads.addThread(loggerThread);
+  threads.addThread(idleThread);
 }
 
 void loop() {
