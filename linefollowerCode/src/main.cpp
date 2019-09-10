@@ -8,7 +8,7 @@
 volatile uint32_t idleCounter = 0;
 int32_t millisSinceCPULoadUpdate = 0;
 int32_t cpuLoadUpdateRate = 5;  // sec
-int ledPin = 13;
+const int ledPin = 13;
 
 Motor rightMotor(0);
 Motor leftMotor(1);
@@ -17,16 +17,38 @@ Linesensor linesensor(&positioning);
 Logger logger(&positioning, &linesensor);
 
 volatile int controllerState = 1;  // init = 0, running = 1
-#define INIT              1
-#define LINE_CALIB_RESET  2
-#define TURN_360          3
-#define CENTER_ON_LINE    4
-#define RUNNING           5
+#define INIT 1
+#define LINE_CALIB_RESET 2
+#define TURN_360 3
+#define CENTER_ON_LINE 4
+#define RUNNING 5
 
 volatile float referenceAngVelRate = 0;
 volatile float referenceSpeed = 0;
 
-float length = 0.085f;  // mm
+const float length = 0.085f;  // mm
+#define CALM 1
+#if CALM
+// nice constants to run calmly
+const float Pomega = 0.003f;         // pwm/(deg/sec)
+const float Pvel = 1.0f;             // pwm/(meter/sec)
+const float runningSpeedMin = 0.0f;  // meter/sec
+const float runningSpeedMax = 0.15f;  // meter/sec
+const float runningSpeedDeviationSlowDown = 20.0f;
+const float calibrationAngVelRate = 180.0f;  // deg/sec
+const float PthetaSquared = 0.0f;
+const float Ptheta = 25000.0f;
+#else
+// nice constants to run as fast as possible
+const float Pomega = 0.003f;         // pwm/(deg/sec)
+const float Pvel = 1.2f;             // pwm/(meter/sec)
+const float runningSpeedMin = 0.0f;  // meter/sec
+const float runningSpeedMax = 1.9f;  // meter/sec
+const float runningSpeedDeviationSlowDown = 20.0f;
+const float calibrationAngVelRate = 180.0f;  // deg/sec
+const float PthetaSquared = 30000.0f;
+const float Ptheta = 5000.0f;
+#endif
 
 void blinkthread() {
   int blinkcode;
@@ -74,8 +96,8 @@ void stateMachinethread() {
           controllerState = INIT;
           Serial.println("return to init");
         } else if (linesensor.lineSensorState == Linesensor::onLine &&
-                   fabs(linesensor.lineSensorValue) < 0.03 &&
-                   fabs(positioning.angVel < 1)) {
+                   fabs(linesensor.lineSensorValue) < 0.03f &&
+                   fabs(positioning.angVel) < 1.0f) {
           positioning.reset();
           controllerState++;
         }
@@ -100,8 +122,6 @@ void stateMachinethread() {
 void motorControllerThread() {
   float leftPwm;
   float rightPwm;
-  volatile float Pomega = 0.003;
-  volatile float Pvel = 1.2;
   while (1) {
     positioning.update();
     switch (controllerState) {
@@ -136,8 +156,10 @@ void speedControllerThread() {
         referenceSpeed = 0;
         break;
       case RUNNING:
-        referenceSpeed = max(0, 1.9 - 20 * linesensor.lineSensorValue *
-                                          linesensor.lineSensorValue);
+        referenceSpeed = max(runningSpeedMin,
+                             runningSpeedMax - runningSpeedDeviationSlowDown *
+                                                   linesensor.lineSensorValue *
+                                                   linesensor.lineSensorValue);
         break;
     }
     threads.delay(2);
@@ -153,22 +175,24 @@ void angleControllerThread() {
         referenceAngVelRate = 0;
         break;
       case TURN_360:
-        referenceAngVelRate = 180.0f;
+        referenceAngVelRate = calibrationAngVelRate;
         break;
       case CENTER_ON_LINE:
       case RUNNING:
         float error = linesensor.lineSensorValue;
         float absError;
         float signum;
-        if (error >= 0) {
+        if (error >= 0.0f) {
           absError = error;
-          signum = 1;
+          signum = 1.0f;
         } else {
           absError = -error;
-          signum = -1;
+          signum = -1.0f;
         }
-        referenceAngVelRate = (30000 * absError * absError + 5000 * absError) *
-                              max(0.3, positioning.velocity) * signum;
+
+        referenceAngVelRate =
+            (PthetaSquared * absError * absError + Ptheta * absError) *
+            max(0.3f, positioning.velocity) * signum;
         break;
     }
     threads.delay(1);
@@ -197,7 +221,7 @@ void idleThread() {
     for (volatile int i = 0; i < 311 * cpuLoadUpdateRate; i++) {
       volatile float a = 123;
       volatile float b = sqrtf(a);
-      (void) b;//to suppress [-Wunused-variable] warning
+      (void)b;  // to suppress [-Wunused-variable] warning
     }
     idleCounter++;
     threads.yield();
