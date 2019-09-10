@@ -34,3 +34,4 @@
 linefollowerCode/.vscode/
 linefollowerCode/.travis.yml
 linefollowerCode/.piolibdeps.lock
+LOG*
