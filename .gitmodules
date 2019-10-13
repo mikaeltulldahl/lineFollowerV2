@@ -1,0 +1,3 @@
+[submodule "matlab/matlabUtils"]
+	path = matlab/matlabUtils
+	url = https://github.com/mikaeltulldahl/matlabUtils
