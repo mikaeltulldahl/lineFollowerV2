@@ -1,5 +1,5 @@
-function lineFollowerTEST()
-global adjustDirection lineIdxs linePoints
+function lineFollowerTEST(inMap)
+global adjustDirection lineIdxs map
 clc
 rng(124)
 N = 201; %line points
@@ -8,18 +8,14 @@ M = (N-1)/ratio + 1; % waypoints
 edgeLength = 0.03;
 initVel = 1;
 delta = 0.001;
-
-%generate line
-linePoints = zeros(2,N);
-direction = 0;%rand*2*pi;
-for i = 2:N
-    direction = direction + 10*pi/180*randn;
-    R = rot(direction);
-    linePoints(:,i) = linePoints(:,i-1) + R*[edgeLength 0]';    
+if nargin == 0
+    map = generateLine(N, edgeLength);
+else
+    map = inMap;
 end
 
 %init waypoints
-waypoints = linePoints(:,1:ratio:end);
+waypoints = map(:,1:ratio:end);
 waypointVel = zeros(size(waypoints));
 for i = 1:M
     if i==1
@@ -38,7 +34,7 @@ end
 
 %init plots
 h = initPlots();
-R = rot(90*pi/180);
+R = rotDeg(90);
 figure(4)
 clf
 grid on
@@ -87,7 +83,7 @@ for i = 1:40
 %     waypointVel(:,idxToRemove) = [];
 %     M = M - sum(idxToRemove);
     
-%     distToLine = max(getDistanceToLine(waypoints, linePoints))
+%     distToLine = max(getDistanceToLine(waypoints, map))
     
 %     [distancePost, ~] = getDistanceDuration(targetPath, targetVel);
     if i ~= 1
@@ -196,9 +192,9 @@ end
 end
 
 function distance = getDistanceToLine(lineIdx, time, coeffs)
-global linePoints
+global map
 %todo search for nearest point on spline
-distance = norm(linePoints(:,lineIdx) - getSplinePos(coeffs, time));
+distance = norm(map(:,lineIdx) - getSplinePos(coeffs, time));
 end
 
 % function acc = getAccRequired(waypoints, vel)
@@ -236,8 +232,8 @@ end
 % end
 
 function assignLineIdxToWpIdx(waypoints)
-global lineIdxs linePoints
-N = size(linePoints,2);
+global lineIdxs map
+N = size(map,2);
 M = size(waypoints,2);
 K = M - 1;
 lineIdxs = zeros(K,2);
@@ -245,7 +241,7 @@ idx = 1;
 for i = 1:N
     done = false;
     segmentCenter = 0.5*(waypoints(:,idx) + waypoints(:,idx + 1));
-    dist = norm(linePoints(:,i) - segmentCenter);
+    dist = norm(map(:,i) - segmentCenter);
     while~done
         if (idx + 1) > K %idx is last segment
             done = true;
@@ -255,7 +251,7 @@ for i = 1:N
             lineIdxs(idx,2) = i; %assign this linepoint to idx
         else %possible that next idx is nearer
             nextSegmentCenter = 0.5*(waypoints(:,idx+1) + waypoints(:,idx + 2));
-            nextDist = norm(linePoints(:,i) - nextSegmentCenter);
+            nextDist = norm(map(:,i) - nextSegmentCenter);
             if nextDist < dist % next segment is closer, increment idx
                 dist = nextDist;
                 idx = idx + 1;
@@ -316,7 +312,7 @@ newPath = oldPath + repmat(adjustment',2,1).*adjustDirection;
 end
 
 function h = initPlots()
-global linePoints
+global map
 f1 = figure(1);
 clf
 axis equal
@@ -330,7 +326,7 @@ h(1) = surface([],[],[],[],...
         'facecol','no',...
         'edgecol','interp',...
         'linew',2);
-h(2) = plot(linePoints(1,:),linePoints(2,:),'ob');
+h(2) = plot(map(1,:),map(2,:),'ob');
 
 f2 = figure(2);
 clf
@@ -345,7 +341,7 @@ h(3) = surface([],[],[],[],...
         'facecol','no',...
         'edgecol','interp',...
         'linew',2);
-h(4) = plot(linePoints(1,:),linePoints(2,:),'ob');
+h(4) = plot(map(1,:),map(2,:),'ob');
 
 linkaxes([f1.CurrentAxes f2.CurrentAxes]);
 
