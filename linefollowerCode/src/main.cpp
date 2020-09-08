@@ -1,13 +1,15 @@
 #include <Arduino.h>
 #include <TeensyThreads.h>
+
 #include "Linesensor.h"
 #include "Logger.h"
 #include "Motor.h"
 #include "Positioning.h"
+#include "StateMachine.h"
 
 volatile uint32_t idleCounter = 0;
 int32_t millisSinceCPULoadUpdate = 0;
-int32_t cpuLoadUpdateRate = 5;  // sec
+const int32_t cpuLoadUpdateRate = 5;  // sec
 const int ledPin = 13;
 
 Motor rightMotor(0);
@@ -16,13 +18,7 @@ Positioning positioning;
 Linesensor linesensor(&positioning);
 Logger logger(&positioning, &linesensor);
 
-volatile int controllerState = 1;  // init = 0, running = 1
-#define INIT 1
-#define LINE_CALIB_RESET 2
-#define TURN_360 3
-#define CENTER_ON_LINE 4
-#define RUNNING 5
-
+volatile int controllerState = INIT;  // init = 0, running = 1
 volatile float referenceAngVelRate = 0;
 volatile float referenceSpeed = 0;
 
@@ -30,9 +26,9 @@ const float length = 0.085f;  // mm
 #define CALM 1
 #if CALM
 // nice constants to run calmly
-const float Pomega = 0.003f;         // pwm/(deg/sec)
-const float Pvel = 1.0f;             // pwm/(meter/sec)
-const float runningSpeedMin = 0.0f;  // meter/sec
+const float Pomega = 0.003f;          // pwm/(deg/sec)
+const float Pvel = 1.0f;              // pwm/(meter/sec)
+const float runningSpeedMin = 0.0f;   // meter/sec
 const float runningSpeedMax = 0.15f;  // meter/sec
 const float runningSpeedDeviationSlowDown = 20.0f;
 const float calibrationAngVelRate = 180.0f;  // deg/sec

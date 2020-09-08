@@ -1,9 +1,18 @@
 #include "EncoderHelper.h"
+
 #include <Arduino.h>
 #include <Encoder.h>
 
-#define ENCODER_SCALING (0.030f * M_PI / (10.0f * 12.0f))
+#include "Utils.h"
+
+#define GEAR_RATIO 10.0f
+#define WHEEL_DIAMETER 0.030f
+#define ENCODER_STEPS_PER_TURN 12.0f
+#define ENCODER_SCALING \
+  (WHEEL_DIAMETER * M_PI / (GEAR_RATIO * ENCODER_STEPS_PER_TURN))
 #define micros2sec(micros) (0.000001f * ((float)micros))
+
+const float VELOCITY_LOW_PASS_RC = 0.005;
 
 EncoderHelper::EncoderHelper(int pin1, int pin2) {
   Encoder encoder(pin1, pin2);
@@ -37,11 +46,11 @@ float EncoderHelper::update(void) {
     dPos = ENCODER_SCALING * ((float)(dist - oldDist));
     oldDist = dist;
     float velocityInstant = (float)dPos / micros2sec(microsSinceEncoderMoved);
-    float rc = 0.005;
-    float alpha = micros2sec(microsSinceEncoderMoved) / (rc + micros2sec(microsSinceEncoderMoved));
-    velocity = (1.0f - alpha) * velocity + alpha * velocityInstant;
+    velocity =
+        lowPassIIR(velocityInstant, velocity,
+                   micros2sec(microsSinceEncoderMoved), VELOCITY_LOW_PASS_RC);
     microsSinceEncoderMoved = 0;
-  }else{
+  } else {
     dPos = 0;
   }
   if (micros2sec(microsSinceEncoderMoved) > 0.1f) {

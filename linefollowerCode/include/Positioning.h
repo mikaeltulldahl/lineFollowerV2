@@ -1,6 +1,7 @@
 #ifndef POSITIONING_H_
 #define POSITIONING_H_
 #include <Arduino.h>
+
 #include "EncoderHelper.h"
 
 class Positioning {

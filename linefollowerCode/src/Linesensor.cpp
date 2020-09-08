@@ -1,7 +1,9 @@
 #include "Linesensor.h"
-#include "Positioning.h"
+
 #include <ADC.h>
 #include <Arduino.h>
+
+#include "Positioning.h"
 
 #define VREF 3.3f
 #define SENSOR_COUNT 24
@@ -127,7 +129,7 @@ void Linesensor::updateLine() {
       case onLine:
         if (lineSensorValue > 0) {
           lineSensorState = lostLineLeft;
-          lineSensorValue = getSensorPos(SENSOR_COUNT-1);
+          lineSensorValue = getSensorPos(SENSOR_COUNT - 1);
         } else {
           lineSensorState = lostLineRight;
           lineSensorValue = getSensorPos(0);
@@ -167,14 +169,15 @@ void Linesensor::update() {
     float length = 0.085f;  // mm
     float cosHeading = cosf(M_PI / 180.0f * positioning->heading);
     float sinHeading = sinf(M_PI / 180.0f * positioning->heading);
-    lineSensorPosX = positioning->getPosX() + length * cosHeading - lineSensorValue * sinHeading;
-    lineSensorPosY = positioning->getPosY() + length * sinHeading + lineSensorValue * cosHeading;
+    lineSensorPosX = positioning->getPosX() + length * cosHeading -
+                     lineSensorValue * sinHeading;
+    lineSensorPosY = positioning->getPosY() + length * sinHeading +
+                     lineSensorValue * cosHeading;
   }
 
-    // printAsciiLineValue();
-    // printAsciiMeasurments();
-    // printVolts();
-  
+  // printAsciiLineValue();
+  // printAsciiMeasurments();
+  // printVolts();
 }
 
 String Linesensor::stateToString(SensorState i) {
@@ -211,9 +214,9 @@ void Linesensor::printAsciiLineValue() {
   Serial.println(">");
 }
 
-void Linesensor::printAsciiMeasurments(){
+void Linesensor::printAsciiMeasurments() {
   Serial.print("<");
-  for(int i = 0; i < SENSOR_COUNT; i++) {
+  for (int i = 0; i < SENSOR_COUNT; i++) {
     if (getSensorReadingNormalized(i) > 0.5f) {
       Serial.print("#");
     } else {
@@ -223,12 +226,12 @@ void Linesensor::printAsciiMeasurments(){
   Serial.println(">");
 }
 
-void Linesensor::printVolts(){
-  for (int i=0;i<SENSOR_COUNT;i++) {
-        Serial.print(i);
-        Serial.print(": ");
-        Serial.print(getVolt(adc_value[i]),1);
-        Serial.print(" ");
-    }
-    Serial.println();
+void Linesensor::printVolts() {
+  for (int i = 0; i < SENSOR_COUNT; i++) {
+    Serial.print(i);
+    Serial.print(": ");
+    Serial.print(getVolt(adc_value[i]), 1);
+    Serial.print(" ");
+  }
+  Serial.println();
 }

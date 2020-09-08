@@ -1,9 +1,12 @@
 #include "Logger.h"
+
 #include <SD.h>
 #include <SPI.h>
+
 #include "Arduino.h"
 #include "Linesensor.h"
 #include "Positioning.h"
+#include "StateMachine.h"
 
 Logger::Logger(Positioning* posObj, Linesensor* lineObj) {
   positioning = posObj;
@@ -44,17 +47,17 @@ void Logger::init() {
 
 void Logger::update(int controllerState) {
   switch (controllerState) {
-    case 1:  // init
-    case 2:  // reset line calibration, wait to stand still
-    case 3:  // turn 360 deg
-    case 4:  // center on line
+    case INIT:
+    case LINE_CALIB_RESET:
+    case TURN_360:
+    case CENTER_ON_LINE:
       if (sdInitialized && logFile) {
         logFile.println("stop");
         logFile.close();
         Serial.println("logfile closed");
       }
       break;
-    case 5:  // running
+    case RUNNING:
       if (linesensor->lineSensorState == Linesensor::onLine) {
         if (sdInitialized && !logFile) {
           logFile = SD.open(logFileName, FILE_WRITE);
@@ -64,12 +67,13 @@ void Logger::update(int controllerState) {
           }
         }
         if (sdInitialized && logFile) {
-          logFile.printf("%6lu,%5.2f,%6.1f,%6.3f,%6.3f,%6ld,%6ld,%d,%6.3f,%6.3f,%6.3f", millis(),
-                  positioning->velocity, positioning->heading,
-                  positioning->getPosX(), positioning->getPosY(),
-                  positioning->getDistRight(), positioning->getDistLeft(),
-                  linesensor->lineSensorState, linesensor->lineSensorValue,
-                  linesensor->lineSensorPosX, linesensor->lineSensorPosY);
+          logFile.printf(
+              "%6lu,%5.2f,%6.1f,%6.3f,%6.3f,%6ld,%6ld,%d,%6.3f,%6.3f,%6.3f",
+              millis(), positioning->velocity, positioning->heading,
+              positioning->getPosX(), positioning->getPosY(),
+              positioning->getDistRight(), positioning->getDistLeft(),
+              linesensor->lineSensorState, linesensor->lineSensorValue,
+              linesensor->lineSensorPosX, linesensor->lineSensorPosY);
         }
       }
       break;

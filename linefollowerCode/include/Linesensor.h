@@ -16,7 +16,7 @@ class Linesensor {
   void update();
 
  private:
- Positioning* positioning;
+  Positioning* positioning;
   void measureAll(void);
   void updateCalibration(void);
   void updateLine(void);

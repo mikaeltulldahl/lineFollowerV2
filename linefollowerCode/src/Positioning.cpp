@@ -1,9 +1,12 @@
 #include "Positioning.h"
+
 #include <Arduino.h>
 #include <MPU9250.h>
 #include <SPI.h>
 #include <TeensyThreads.h>
+
 #include "EncoderHelper.h"
+#include "Utils.h"
 
 MPU9250 IMU(SPI, 10);
 
@@ -50,21 +53,13 @@ void Positioning::reset() {
 
 void Positioning::calibrateGyroBias() {
   float samples[CALIBRATION_SAMPLES_NUM];
-  float sum = 0;
   for (int i = 0; i < CALIBRATION_SAMPLES_NUM; i++) {
-    // IMU.readSensor();
     samples[i] = 180.0f / M_PI * IMU.getGyroZ_rads();
-    sum += samples[i];
     threads.delay(10);
   }
-  float diffSqr = 0;
-  float meanSample = sum / (float)CALIBRATION_SAMPLES_NUM;
-  for (int i = 0; i < CALIBRATION_SAMPLES_NUM; i++) {
-    float diff = samples[i] - meanSample;
-    diffSqr += diff * diff;
-  }
+  float meanSample, stdSample;
+  getbufferMeanStd(samples, CALIBRATION_SAMPLES_NUM, meanSample, stdSample);
 
-  float stdSample = sqrtf(diffSqr / (float(CALIBRATION_SAMPLES_NUM)));
   Serial.print("std: ");
   Serial.print(stdSample, 3);
   Serial.print(", mean: ");

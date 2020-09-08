@@ -1,7 +1,8 @@
 #ifndef ENCODER_HELPER_H
 #define ENCODER_HELPER_H
-#include "Arduino.h"
 #include <Encoder.h>
+
+#include "Arduino.h"
 
 class EncoderHelper {
  public:

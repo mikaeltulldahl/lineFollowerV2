@@ -1,9 +1,10 @@
 #ifndef LOGGER_H
 #define LOGGER_H
+#include <SD.h>
+
 #include "Arduino.h"
 #include "Linesensor.h"
 #include "Positioning.h"
-#include <SD.h>
 
 class Logger {
  public:
