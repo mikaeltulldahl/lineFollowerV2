@@ -4,16 +4,16 @@
 
 #include "Arduino.h"
 #include "Linesensor.h"
-#include "Positioning.h"
+#include "Odometry.h"
 
 class Logger {
  public:
-  Logger(Positioning* posObj, Linesensor* lineObj);
+  Logger(Odometry* odoObj, Linesensor* lineObj);
   void init();
   void update(int controllerState);
 
  private:
-  Positioning* positioning;
+  Odometry* odometry;
   Linesensor* linesensor;
   char logFileName[20];
   File logFile;

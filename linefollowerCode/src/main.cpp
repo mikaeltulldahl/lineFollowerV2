@@ -4,7 +4,7 @@
 #include "Linesensor.h"
 #include "Logger.h"
 #include "Motor.h"
-#include "Positioning.h"
+#include "Odometry.h"
 #include "StateMachine.h"
 
 volatile uint32_t idleCounter = 0;
@@ -14,9 +14,9 @@ const int ledPin = 13;
 
 Motor rightMotor(0);
 Motor leftMotor(1);
-Positioning positioning;
-Linesensor linesensor(&positioning);
-Logger logger(&positioning, &linesensor);
+Odometry odometry;
+Linesensor linesensor(&odometry);
+Logger logger(&odometry, &linesensor);
 
 volatile int controllerState = INIT;  // init = 0, running = 1
 volatile float referenceAngVelRate = 0;
@@ -69,13 +69,13 @@ void stateMachinethread() {
         }
         break;
       case LINE_CALIB_RESET:  // wait to stand still
-        positioning.calibrateGyroBias();
+        odometry.calibrateGyroBias();
         if (linesensor.lineSensorState == Linesensor::inAir) {
           controllerState = INIT;
           Serial.println("return to init");
-        } else if (positioning.gyroCalibrated) {
+        } else if (odometry.gyroCalibrated) {
           Serial.println("gyro calibrated");
-          positioning.heading = 0;
+          odometry.resetHeading();
           controllerState++;
         }
         break;
@@ -83,7 +83,7 @@ void stateMachinethread() {
         if (linesensor.lineSensorState == Linesensor::inAir) {
           controllerState = INIT;
           Serial.println("return to init");
-        } else if (fabs(positioning.heading) >= 360) {
+        } else if (fabs(odometry.getHeading()) >= 360) {
           controllerState++;
         }
         break;
@@ -93,8 +93,8 @@ void stateMachinethread() {
           Serial.println("return to init");
         } else if (linesensor.lineSensorState == Linesensor::onLine &&
                    fabs(linesensor.lineSensorValue) < 0.03f &&
-                   fabs(positioning.angVel) < 1.0f) {
-          positioning.reset();
+                   fabs(odometry.getAngVel()) < 1.0f) {
+          odometry.reset();
           controllerState++;
         }
         break;
@@ -119,7 +119,7 @@ void motorControllerThread() {
   float leftPwm;
   float rightPwm;
   while (1) {
-    positioning.update();
+    odometry.update();
     switch (controllerState) {
       case INIT:
       case LINE_CALIB_RESET:
@@ -130,8 +130,8 @@ void motorControllerThread() {
       case CENTER_ON_LINE:
       case RUNNING:
       default:
-        float speedError = referenceSpeed - positioning.velocity;
-        float angVelError = positioning.angVel - referenceAngVelRate;
+        float speedError = referenceSpeed - odometry.getVelocity();
+        float angVelError = odometry.getAngVel() - referenceAngVelRate;
         leftPwm = Pvel * speedError + Pomega * angVelError;
         rightPwm = Pvel * speedError - Pomega * angVelError;
         break;
@@ -188,7 +188,7 @@ void angleControllerThread() {
 
         referenceAngVelRate =
             (PthetaSquared * absError * absError + Ptheta * absError) *
-            max(0.3f, positioning.velocity) * signum;
+            max(0.3f, odometry.getVelocity()) * signum;
         break;
     }
     threads.delay(1);
@@ -233,7 +233,7 @@ void setup() {
   threads.setDefaultTimeSlice(1);
   pinMode(ledPin, OUTPUT);
   logger.init();
-  positioning.init();
+  odometry.init();
   linesensor.init();
   Serial.println("INIT DONE");
   threads.addThread(blinkthread);

@@ -41,20 +41,20 @@ float EncoderHelper::update(void) {
   dist = encPtr->read();
   distMeters = ENCODER_SCALING * (float)dist;
   microsSinceEncoderMoved += timeDiff;
-  float dPos;
+  float dDist;
   if (dist != oldDist) {
-    dPos = ENCODER_SCALING * ((float)(dist - oldDist));
+    dDist = ENCODER_SCALING * ((float)(dist - oldDist));
     oldDist = dist;
-    float velocityInstant = (float)dPos / micros2sec(microsSinceEncoderMoved);
+    float velocityInstant = (float)dDist / micros2sec(microsSinceEncoderMoved);
     velocity =
         lowPassIIR(velocityInstant, velocity,
                    micros2sec(microsSinceEncoderMoved), VELOCITY_LOW_PASS_RC);
     microsSinceEncoderMoved = 0;
   } else {
-    dPos = 0;
+    dDist = 0;
   }
   if (micros2sec(microsSinceEncoderMoved) > 0.1f) {
     velocity = 0;
   }
-  return dPos;
+  return dDist;
 }

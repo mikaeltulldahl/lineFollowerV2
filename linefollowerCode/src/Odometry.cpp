@@ -1,4 +1,4 @@
-#include "Positioning.h"
+#include "Odometry.h"
 
 #include <Arduino.h>
 #include <MPU9250.h>
@@ -20,9 +20,9 @@ EncoderHelper leftEncoder(30, 29);
 int status;
 float gyroZbias;
 
-Positioning::Positioning() {}
+Odometry::Odometry() {}
 
-void Positioning::init(void) {
+void Odometry::init(void) {
   SPI.setMOSI(11);
   SPI.setMISO(12);
   SPI.setSCK(27);
@@ -42,16 +42,16 @@ void Positioning::init(void) {
   reset();
 }
 
-void Positioning::reset() {
+void Odometry::reset() {
   rightEncoder.reset();
   leftEncoder.reset();
   heading = 0;
   velocity = 0;
-  posX = 0;
-  posY = 0;
+  x = 0;
+  y = 0;
 }
 
-void Positioning::calibrateGyroBias() {
+void Odometry::calibrateGyroBias() {
   float samples[CALIBRATION_SAMPLES_NUM];
   for (int i = 0; i < CALIBRATION_SAMPLES_NUM; i++) {
     samples[i] = 180.0f / M_PI * IMU.getGyroZ_rads();
@@ -71,33 +71,49 @@ void Positioning::calibrateGyroBias() {
   gyroCalibrated = stable;
 }
 
-void Positioning::update(void) {
+void Odometry::update(void) {
   int32_t newTime = (int32_t)micros();
   int32_t timeDiff = newTime - previousTime;
   previousTime = newTime;
   IMU.readSensor();
   angVel = -((180.0f / M_PI) * IMU.getGyroZ_rads() - gyroZbias);
   heading += micros2sec(timeDiff) * angVel;
-  float dPosRight = rightEncoder.update();
-  float dPosLeft = leftEncoder.update();
-  float dPos = 0.5f * (dPosRight + dPosLeft);
+  float dDistRight = rightEncoder.update();
+  float dDistLeft = leftEncoder.update();
+  float dDist = 0.5f * (dDistRight + dDistLeft);
   velocity = 0.5f * (rightEncoder.velocity + leftEncoder.velocity);
-  posX += dPos * cosf(M_PI / 180.0f * heading);
-  posY += dPos * sinf(M_PI / 180.0f * heading);
+  x += dDist * cosf(M_PI / 180.0f * heading);
+  y += dDist * sinf(M_PI / 180.0f * heading);
 }
 
-int32_t Positioning::getDistRight() {
+int32_t Odometry::getDistRight() {
   return rightEncoder.dist;
 }
 
-int32_t Positioning::getDistLeft() {
+int32_t Odometry::getDistLeft() {
   return leftEncoder.dist;
 }
 
-float Positioning::getPosX() {
-  return posX;
+float Odometry::getX() {
+  return x;
 }
 
-float Positioning::getPosY() {
-  return posY;
+float Odometry::getY() {
+  return y;
+}
+
+float Odometry::getHeading() {
+  return heading;
+}
+
+void Odometry::resetHeading() {
+  heading = 0;
+}
+
+float Odometry::getAngVel() {
+  return angVel;
+}
+
+float Odometry::getVelocity() {
+  return velocity;
 }

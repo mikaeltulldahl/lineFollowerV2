@@ -1,27 +1,29 @@
-#ifndef POSITIONING_H_
-#define POSITIONING_H_
+#ifndef ODOMETRY_H_
+#define ODOMETRY_H_
 #include <Arduino.h>
 
 #include "EncoderHelper.h"
 
-class Positioning {
+class Odometry {
  public:
-  Positioning();
+  Odometry();
   void init();
   void update();
   void calibrateGyroBias();
   void reset();
-  float getPosX();
-  float getPosY();
+  float getX();
+  float getY();
   int32_t getDistRight();
   int32_t getDistLeft();
-  volatile float heading, angVel;
+  float getHeading();
+  void resetHeading();
+  float getAngVel();
+  float getVelocity();
   volatile boolean gyroCalibrated;
-  volatile float velocity;
 
  private:
-  volatile float posX, posY;
+  volatile float x, y, heading, angVel, velocity;
   volatile int32_t previousTime;
 };
 
-#endif /* POSITIONING_H_ */
+#endif /* ODOMETRY_H_ */

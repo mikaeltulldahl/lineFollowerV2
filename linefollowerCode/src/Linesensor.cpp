@@ -3,7 +3,7 @@
 #include <ADC.h>
 #include <Arduino.h>
 
-#include "Positioning.h"
+#include "Odometry.h"
 
 #define VREF 3.3f
 #define SENSOR_COUNT 24
@@ -29,8 +29,8 @@ int adc_value[SENSOR_COUNT];
 
 ADC* adc = new ADC();  // adc object
 
-Linesensor::Linesensor(Positioning* posObj) {
-  positioning = posObj;
+Linesensor::Linesensor(Odometry* odoObj) {
+  odometry = odoObj;
   lineSensorState = SensorState::uninitiated;
 }
 
@@ -167,11 +167,11 @@ void Linesensor::update() {
 
   if (lineSensorState != inAir) {
     float length = 0.085f;  // mm
-    float cosHeading = cosf(M_PI / 180.0f * positioning->heading);
-    float sinHeading = sinf(M_PI / 180.0f * positioning->heading);
-    lineSensorPosX = positioning->getPosX() + length * cosHeading -
+    float cosHeading = cosf(M_PI / 180.0f * odometry->getHeading());
+    float sinHeading = sinf(M_PI / 180.0f * odometry->getHeading());
+    lineSensorOdoX = odometry->getX() + length * cosHeading -
                      lineSensorValue * sinHeading;
-    lineSensorPosY = positioning->getPosY() + length * sinHeading +
+    lineSensorOdoY = odometry->getY() + length * sinHeading +
                      lineSensorValue * cosHeading;
   }
 

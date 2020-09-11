@@ -5,11 +5,11 @@
 
 #include "Arduino.h"
 #include "Linesensor.h"
-#include "Positioning.h"
+#include "Odometry.h"
 #include "StateMachine.h"
 
-Logger::Logger(Positioning* posObj, Linesensor* lineObj) {
-  positioning = posObj;
+Logger::Logger(Odometry* odoObj, Linesensor* lineObj) {
+  odometry = odoObj;
   linesensor = lineObj;
   sdInitialized = false;
 }
@@ -69,11 +69,11 @@ void Logger::update(int controllerState) {
         if (sdInitialized && logFile) {
           logFile.printf(
               "%6lu,%5.2f,%6.1f,%6.3f,%6.3f,%6ld,%6ld,%d,%6.3f,%6.3f,%6.3f",
-              millis(), positioning->velocity, positioning->heading,
-              positioning->getPosX(), positioning->getPosY(),
-              positioning->getDistRight(), positioning->getDistLeft(),
+              millis(), odometry->getVelocity(), odometry->getHeading(),
+              odometry->getX(), odometry->getY(),
+              odometry->getDistRight(), odometry->getDistLeft(),
               linesensor->lineSensorState, linesensor->lineSensorValue,
-              linesensor->lineSensorPosX, linesensor->lineSensorPosY);
+              linesensor->lineSensorOdoX, linesensor->lineSensorOdoY);
         }
       }
       break;
