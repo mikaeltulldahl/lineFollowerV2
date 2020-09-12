@@ -91,12 +91,16 @@ void Odometry::update(void) {
   y += dDist * sinf(M_PI / 180.0f * heading);
 }
 
-int32_t Odometry::getDistRight() {
-  return rightEncoder.dist;
+int32_t Odometry::getStepsRight() {
+  return rightEncoder.steps;
 }
 
-int32_t Odometry::getDistLeft() {
-  return leftEncoder.dist;
+int32_t Odometry::getStepsLeft() {
+  return leftEncoder.steps;
+}
+
+float Odometry::getDist() {
+  return 0.5f * (rightEncoder.dist + leftEncoder.dist);
 }
 
 float Odometry::getX() {

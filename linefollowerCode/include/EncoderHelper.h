@@ -10,13 +10,13 @@ class EncoderHelper {
   void init();
   float update();
   void reset();
-  volatile int32_t dist;
-  volatile float distMeters;
+  volatile int32_t steps;
+  volatile float dist;
   volatile float velocity;
 
  private:
   Encoder encoder;
-  volatile int32_t oldDist;
+  volatile int32_t previousSteps;
   volatile int32_t previousTime;
   volatile int32_t microsSinceEncoderMoved;
 };

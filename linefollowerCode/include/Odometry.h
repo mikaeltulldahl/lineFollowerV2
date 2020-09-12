@@ -13,12 +13,13 @@ class Odometry {
   void reset();
   float getX();
   float getY();
-  int32_t getDistRight();
-  int32_t getDistLeft();
+  int32_t getStepsRight();
+  int32_t getStepsLeft();
   float getHeading();
   void resetHeading();
   float getAngVel();
   float getVelocity();
+  float getDist();
   volatile boolean gyroCalibrated;
 
  private:

@@ -21,37 +21,39 @@ void EncoderHelper::init(void) {
   velocity = 0;
   previousTime = (int32_t)micros();
   microsSinceEncoderMoved = 0;
-  dist = encoder.read();
-  oldDist = dist;
+  steps = encoder.read();
+  previousSteps = steps;
 }
 
 void EncoderHelper::reset() {
-  dist = 0;
-  oldDist = 0;
+  steps = 0;
+  previousSteps = 0;
   encoder.write(0);
 }
 
 float EncoderHelper::update(void) {
   int32_t newTime = (int32_t)micros();
   int32_t timeDiff = newTime - previousTime;
-  previousTime = newTime;
-  dist = encoder.read();
-  distMeters = ENCODER_SCALING * (float)dist;
-  microsSinceEncoderMoved += timeDiff;
-  float dDist;
-  if (dist != oldDist) {
-    dDist = ENCODER_SCALING * ((float)(dist - oldDist));
-    oldDist = dist;
-    float velocityInstant = (float)dDist / micros2sec(microsSinceEncoderMoved);
-    velocity =
-        lowPassIIR(velocityInstant, velocity,
-                   micros2sec(microsSinceEncoderMoved), VELOCITY_LOW_PASS_RC);
-    microsSinceEncoderMoved = 0;
-  } else {
-    dDist = 0;
-  }
-  if (micros2sec(microsSinceEncoderMoved) > 0.1f) {
-    velocity = 0;
+  float dDist = 0;
+  if (timeDiff > 0) {
+    steps = encoder.read();
+    dist = ENCODER_SCALING * (float)steps;
+    microsSinceEncoderMoved += timeDiff;
+    if (steps != previousSteps) {
+      dDist = ENCODER_SCALING * ((float)(steps - previousSteps));
+      float velocityInstant = dDist / micros2sec(microsSinceEncoderMoved);
+      velocity =
+          lowPassIIR(velocityInstant, velocity,
+                     micros2sec(microsSinceEncoderMoved), VELOCITY_LOW_PASS_RC);
+      microsSinceEncoderMoved = 0;
+    } else {
+      dDist = 0;
+    }
+    if (micros2sec(microsSinceEncoderMoved) > 0.1f) {
+      velocity = 0;
+    }
+    previousTime = newTime;
+    previousSteps = steps;
   }
   return dDist;
 }

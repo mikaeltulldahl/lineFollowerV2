@@ -71,7 +71,7 @@ void Logger::update(int controllerState) {
               "%6lu,%5.2f,%6.1f,%6.3f,%6.3f,%6ld,%6ld,%d,%6.3f,%6.3f,%6.3f",
               millis(), odometry->getVelocity(), odometry->getHeading(),
               odometry->getX(), odometry->getY(),
-              odometry->getDistRight(), odometry->getDistLeft(),
+              odometry->getStepsRight(), odometry->getStepsLeft(),
               linesensor->lineSensorState, linesensor->lineSensorValue,
               linesensor->lineSensorOdoX, linesensor->lineSensorOdoY);
         }
