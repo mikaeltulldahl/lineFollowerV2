@@ -1,3 +1,6 @@
 [submodule "matlab/matlabUtils"]
 	path = matlab/matlabUtils
 	url = https://github.com/mikaeltulldahl/matlabUtils
+[submodule "linefollowerCode/lib/MPU9250"]
+	path = linefollowerCode/lib/MPU9250
+	url = https://github.com/mikaeltulldahl/MPU9250.git
