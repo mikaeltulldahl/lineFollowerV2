@@ -23,6 +23,11 @@ float gyroZbias;
 Odometry::Odometry() {}
 
 void Odometry::init(void) {
+  Serial.println("Encoder init");
+  rightEncoder.init();
+  leftEncoder.init();
+
+  Serial.println("IMU init");
   SPI.setMOSI(11);
   SPI.setMISO(12);
   SPI.setSCK(27);

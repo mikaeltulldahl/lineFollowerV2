@@ -14,31 +14,28 @@
 
 const float VELOCITY_LOW_PASS_RC = 0.005;
 
-EncoderHelper::EncoderHelper(int pin1, int pin2) {
-  Encoder encoder(pin1, pin2);
-  encPtr = &encoder;
-}
+EncoderHelper::EncoderHelper(int pin1, int pin2) : encoder(pin1, pin2) {}
 
 void EncoderHelper::init(void) {
   reset();
   velocity = 0;
   previousTime = (int32_t)micros();
   microsSinceEncoderMoved = 0;
-  dist = encPtr->read();
+  dist = encoder.read();
   oldDist = dist;
 }
 
 void EncoderHelper::reset() {
   dist = 0;
   oldDist = 0;
-  encPtr->write(0);
+  encoder.write(0);
 }
 
 float EncoderHelper::update(void) {
   int32_t newTime = (int32_t)micros();
   int32_t timeDiff = newTime - previousTime;
   previousTime = newTime;
-  dist = encPtr->read();
+  dist = encoder.read();
   distMeters = ENCODER_SCALING * (float)dist;
   microsSinceEncoderMoved += timeDiff;
   float dDist;

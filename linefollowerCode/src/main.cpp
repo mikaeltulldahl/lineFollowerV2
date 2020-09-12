@@ -225,13 +225,13 @@ void idleThread() {
 }
 
 void setup() {
+  pinMode(ledPin, OUTPUT);
   digitalWrite(ledPin, HIGH);
   Serial.begin(115200);
   delay(5000);
   digitalWrite(ledPin, LOW);
   Serial.println("START");
   threads.setDefaultTimeSlice(1);
-  pinMode(ledPin, OUTPUT);
   logger.init();
   odometry.init();
   linesensor.init();
@@ -243,6 +243,7 @@ void setup() {
   threads.addThread(motorControllerThread);
   threads.addThread(loggerThread);
   threads.addThread(idleThread);
+  Serial.println("ADD THREADS DONE");
 }
 
 void loop() {

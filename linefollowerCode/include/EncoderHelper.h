@@ -15,7 +15,7 @@ class EncoderHelper {
   volatile float velocity;
 
  private:
-  Encoder* encPtr;
+  Encoder encoder;
   volatile int32_t oldDist;
   volatile int32_t previousTime;
   volatile int32_t microsSinceEncoderMoved;
