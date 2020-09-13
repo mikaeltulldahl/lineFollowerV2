@@ -35,7 +35,7 @@ end
 %init plots
 h = initPlots();
 R = rotDeg(90);
-figure(4)
+figure(31)
 clf
 grid on
 hold on
@@ -87,7 +87,7 @@ for i = 1:40
     
 %     [distancePost, ~] = getDistanceDuration(targetPath, targetVel);
     if i ~= 1
-        figure(4)
+        figure(31)
         plot(i, segmentDurationTot(waypoints, waypointVel),'or');
         plot(i,sum(f0),'ob');
     end
@@ -313,7 +313,7 @@ end
 
 function h = initPlots()
 global map
-f1 = figure(1);
+f1 = figure(32);
 clf
 axis equal
 grid on
@@ -328,7 +328,7 @@ h(1) = surface([],[],[],[],...
         'linew',2);
 h(2) = plot(map(1,:),map(2,:),'ob');
 
-f2 = figure(2);
+f2 = figure(33);
 clf
 axis equal
 grid on

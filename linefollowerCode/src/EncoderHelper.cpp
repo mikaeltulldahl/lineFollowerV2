@@ -5,7 +5,7 @@
 
 #include "Utils.h"
 
-#define GEAR_RATIO 10.0f
+#define GEAR_RATIO 9.96f
 #define WHEEL_DIAMETER 0.030f
 #define ENCODER_STEPS_PER_TURN 12.0f
 #define ENCODER_SCALING \

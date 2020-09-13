@@ -1,4 +1,4 @@
-function [lineOut] = postProcessLine(line, shouldPlot)
+function lineOut = postProcessLine(line, shouldPlot)
 N = size(line,1);
 
 %smooth x and y coordinates
@@ -25,30 +25,21 @@ lineSmoothInterpY = interp1(segmentLengthCumSum,lineSmooth(:,2),linspace(0,segme
 lineSmoothInterp = [lineSmoothInterpX, lineSmoothInterpY];
 
 %calculate curvature
-% lineSmoothInterpDiff = diff(lineSmoothInterp,1);
 K2 = N2 - 1;
-% segmentLengthInterp = zeros(K2,1);
-% for i = 1:K2
-%     segmentLengthInterp(i) = norm(lineSmoothInterpDiff(i,:));
-% end
-% curveHeadingRad = atan2(lineSmoothInterpDiff(:,2),lineSmoothInterpDiff(:,1));
 [curveHeadingRad, segmentLengthInterp] = lineHeading(lineSmoothInterp');
 segmentLengthInterpMean = mean(segmentLengthInterp);
 curvature = zeros(K2,1);
 for i = 2:K2
-    %curvature = dHeading/dDist
     dHeading = wrapAngleRad(curveHeadingRad(i) - curveHeadingRad(i-1));
     curvature(i) = dHeading/segmentLengthInterpMean;
 end
 
-%find peak curvature autocorrelation -> find when does the line repeats
-
-[curvatureCorr2,lags2] = xcorr(curvature,'unbiased');
-curvatureCorr2 = curvatureCorr2/max(curvatureCorr2);
-minLineLength = 2;
-minIdx = 500;%round(1 + minLineLength/segmentLengthInterp(1));
-[~, maxCorrLags] = max(curvatureCorr2(N2-1+minIdx:end));
-maxCorrLags = maxCorrLags + minIdx - 2;
+%find peak curvature using autocorrelation -> find when the curvature repeats
+[curvatureCorr,lags] = xcorr(curvature,'unbiased');
+curvatureCorr = curvatureCorr/max(curvatureCorr);
+maxCorrIdxs = findPeaks(curvatureCorr, 0.95);
+lapLengths = segmentLengthInterpMean*diff(maxCorrIdxs);
+maxCorrLags = round(median(diff(maxCorrIdxs)));
 
 %close loop
 mismatch = lineSmoothInterp((maxCorrLags+1),:) - lineSmoothInterp(1,:);
@@ -61,7 +52,7 @@ end
 % csvwrite(outFile, lineOut);
 
 if shouldPlot
-    figure(1)
+    figure(21)
     clf
     hold on
     grid on
@@ -70,15 +61,16 @@ if shouldPlot
     plot(segmentLength)
     plot(segmentLengthInterp)
     legend('original', 'interpolated');
-    
-    figure(2)
+
+    figure(22)
     clf
     hold on
     grid on
     title('unbiased correlation');
-    plot(lags2,curvatureCorr2,'.b')
-    
-    figure(4);
+    plot(lags,curvatureCorr,'.b')
+    plot(lags(maxCorrIdxs),curvatureCorr(maxCorrIdxs),'or')
+
+    figure(23);
     clf;
     grid on
     hold on
@@ -89,16 +81,16 @@ if shouldPlot
     plot(lineSmooth(:,1),lineSmooth(:,2),'og')
     plot(lineSmoothInterp(1:maxCorrLags,1),lineSmoothInterp(1:maxCorrLags,2),'-xb')
     plot(lineOut(:,1),lineOut(:,2),'-xm')
-    
-    
-    figure(5);
+    plot(lineOut(1,1),lineOut(1,2),'om')
+
+    figure(24);
     clf;
     grid on
     hold on
     title('heading');
     plot((180/pi)*curveHeadingRad,'g')
-    
-    figure(6);
+
+    figure(25);
     clf;
     grid on
     hold on

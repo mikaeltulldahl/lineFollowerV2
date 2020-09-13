@@ -17,6 +17,8 @@ EncoderHelper leftEncoder(30, 29);
 #define CALIBRATION_SAMPLES_NUM 100
 #define CALIBRATION_STABILITY_CRITERIA 0.5f
 
+#define GYRO_Z_SCALING 0.9975f
+
 int status;
 float gyroZbias;
 
@@ -59,6 +61,7 @@ void Odometry::reset() {
 void Odometry::calibrateGyroBias() {
   float samples[CALIBRATION_SAMPLES_NUM];
   for (int i = 0; i < CALIBRATION_SAMPLES_NUM; i++) {
+    // update() is assumed to be run asynchronously
     samples[i] = 180.0f / M_PI * IMU.getGyroZ_rads();
     threads.delay(10);
   }
@@ -81,7 +84,8 @@ void Odometry::update(void) {
   int32_t timeDiff = newTime - previousTime;
   previousTime = newTime;
   IMU.readSensor();
-  angVel = -((180.0f / M_PI) * IMU.getGyroZ_rads() - gyroZbias);
+  angVel =
+      -((180.0f / M_PI) * IMU.getGyroZ_rads() - gyroZbias) * GYRO_Z_SCALING;
   heading += micros2sec(timeDiff) * angVel;
   float dDistRight = rightEncoder.update();
   float dDistLeft = leftEncoder.update();

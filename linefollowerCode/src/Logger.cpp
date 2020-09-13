@@ -18,10 +18,10 @@ void Logger::init() {
   Serial.print("Initializing SD card...");
 
   if (!SD.begin(BUILTIN_SDCARD)) {
-    Serial.println("initialization failed!");
+    Serial.println("SD init failed");
     return;
   } else {
-    Serial.println("initialization done.");
+    Serial.println("SD init done");
     sdInitialized = true;
   }
 
@@ -68,12 +68,12 @@ void Logger::update(int controllerState) {
         }
         if (sdInitialized && logFile) {
           logFile.printf(
-              "%6lu,%5.2f,%6.1f,%6.3f,%6.3f,%6ld,%6ld,%d,%6.3f,%6.3f,%6.3f",
+              "%7lu,%6.3f,%8.2f,%8.4f,%8.4f,%7ld,%7ld,%d,%7.4f,%8.4f,%8.4f\n",
               millis(), odometry->getVelocity(), odometry->getHeading(),
-              odometry->getX(), odometry->getY(),
-              odometry->getStepsRight(), odometry->getStepsLeft(),
-              linesensor->lineSensorState, linesensor->lineSensorValue,
-              linesensor->lineSensorOdoX, linesensor->lineSensorOdoY);
+              odometry->getX(), odometry->getY(), odometry->getStepsRight(),
+              odometry->getStepsLeft(), linesensor->lineSensorState,
+              linesensor->lineSensorValue, linesensor->lineSensorOdoX,
+              linesensor->lineSensorOdoY);
         }
       }
       break;

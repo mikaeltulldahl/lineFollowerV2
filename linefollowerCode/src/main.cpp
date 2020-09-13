@@ -248,7 +248,7 @@ void setup() {
   threads.addThread(angleControllerThread);
   threads.addThread(speedControllerThread);
   threads.addThread(motorControllerThread);
-  threads.addThread(loggerThread);
+  threads.addThread(loggerThread,0, 3000);
   threads.addThread(idleThread);
   Serial.println("ADD THREADS DONE");
 }
