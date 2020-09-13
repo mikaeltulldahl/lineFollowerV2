@@ -12,7 +12,7 @@
   (WHEEL_DIAMETER * M_PI / (GEAR_RATIO * ENCODER_STEPS_PER_TURN))
 #define micros2sec(micros) (0.000001f * ((float)micros))
 
-const float VELOCITY_LOW_PASS_RC = 0.005;
+const float VELOCITY_LOW_PASS_RC = 0.05;
 
 EncoderHelper::EncoderHelper(int pin1, int pin2) : encoder(pin1, pin2) {}
 

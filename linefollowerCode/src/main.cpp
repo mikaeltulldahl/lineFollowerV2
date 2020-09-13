@@ -6,6 +6,7 @@
 #include "Motor.h"
 #include "Odometry.h"
 #include "StateMachine.h"
+#include "Utils.h"
 
 volatile uint32_t idleCounter = 0;
 int32_t millisSinceCPULoadUpdate = 0;
@@ -19,6 +20,7 @@ Linesensor linesensor(&odometry);
 Logger logger(&odometry, &linesensor);
 
 volatile int controllerState = INIT;  // init = 0, running = 1
+volatile int32_t runningStartTime = 0;
 volatile float referenceAngVelRate = 0;
 volatile float referenceSpeed = 0;
 
@@ -26,24 +28,31 @@ const float length = 0.085f;  // mm
 #define CALM 1
 #if CALM
 // nice constants to run calmly
-const float Pomega = 0.003f;          // pwm/(deg/sec)
-const float Pvel = 1.0f;              // pwm/(meter/sec)
-const float runningSpeedMin = 0.0f;   // meter/sec
-const float runningSpeedMax = 0.15f;  // meter/sec
-const float runningSpeedDeviationSlowDown = 20.0f;
+const float Pomega = 0.003f;           // pwm/(deg/sec)
+const float Pvel = 3.0f;               // pwm/(meter/sec)
+const float runningSpeedMin = -0.05f;  // meter/sec
+const float runningSpeedMax = 0.5f;    // meter/sec
+const float PslowDown = runningSpeedMax / 0.03f;
+const float PslowDown2 = runningSpeedMax / pow2(0.05f);
 const float calibrationAngVelRate = 180.0f;  // deg/sec
-const float PthetaSquared = 0.0f;
-const float Ptheta = 25000.0f;
+const float Ptheta2 = 0.0f;
+const float Ptheta = 15.0f;
+const float angVelMax = 360.0f;
+const float startAcc = 1.0f;           // meter/sec^2
+
 #else
 // nice constants to run as fast as possible
 const float Pomega = 0.003f;         // pwm/(deg/sec)
 const float Pvel = 1.2f;             // pwm/(meter/sec)
 const float runningSpeedMin = 0.0f;  // meter/sec
 const float runningSpeedMax = 1.9f;  // meter/sec
-const float runningSpeedDeviationSlowDown = 20.0f;
+const float PslowDown = 0;
+const float PslowDown2 = 20.0f;
 const float calibrationAngVelRate = 180.0f;  // deg/sec
-const float PthetaSquared = 30000.0f;
-const float Ptheta = 5000.0f;
+const float Ptheta2 = 0.2f;
+const float Ptheta = 15.0f;
+const float angVelMax = 720.0f;
+const float startAcc = 1.0f;           // meter/sec^2
 #endif
 
 void blinkthread() {
@@ -96,6 +105,7 @@ void stateMachinethread() {
                    fabs(odometry.getAngVel()) < 1.0f) {
           odometry.reset();
           controllerState++;
+          runningStartTime = millis();
         }
         break;
       case RUNNING:
@@ -131,7 +141,9 @@ void motorControllerThread() {
       case RUNNING:
       default:
         float speedError = referenceSpeed - odometry.getVelocity();
-        float angVelError = odometry.getAngVel() - referenceAngVelRate;
+        float angVelError =
+            odometry.getAngVel() -
+            max(-angVelMax, min(angVelMax, referenceAngVelRate));
         leftPwm = Pvel * speedError + Pomega * angVelError;
         rightPwm = Pvel * speedError - Pomega * angVelError;
         break;
@@ -147,15 +159,19 @@ void speedControllerThread() {
     switch (controllerState) {
       case INIT:
       case LINE_CALIB_RESET:
-      case TURN_360:
-      case CENTER_ON_LINE:
         referenceSpeed = 0;
         break;
+      case TURN_360:
+      case CENTER_ON_LINE:
+        referenceSpeed = min(0.1f, max(-0.1f, -1.0f * odometry.getDist()));
+        break;
       case RUNNING:
-        referenceSpeed = max(runningSpeedMin,
-                             runningSpeedMax - runningSpeedDeviationSlowDown *
-                                                   linesensor.lineSensorValue *
-                                                   linesensor.lineSensorValue);
+        float slowdown = PslowDown * fabs(linesensor.lineSensorValue);
+        float slowdown2 = PslowDown2 * pow2(linesensor.lineSensorValue);
+        float runningTime = 0.001f*((float)((int32_t)millis() - runningStartTime));
+        float rampedRunningSpeedMax = min(runningSpeedMax, startAcc*runningTime);//limit acceleration at start
+        referenceSpeed =
+            max(runningSpeedMin, rampedRunningSpeedMax - slowdown - slowdown2);
         break;
     }
     threads.delay(2);
@@ -175,20 +191,11 @@ void angleControllerThread() {
         break;
       case CENTER_ON_LINE:
       case RUNNING:
-        float error = linesensor.lineSensorValue;
-        float absError;
-        float signum;
-        if (error >= 0.0f) {
-          absError = error;
-          signum = 1.0f;
-        } else {
-          absError = -error;
-          signum = -1.0f;
-        }
-
+        float angleError = 180 / M_PI * atan(linesensor.lineSensorValue / length);
+        float absAngleError = fabs(angleError);
         referenceAngVelRate =
-            (PthetaSquared * absError * absError + Ptheta * absError) *
-            max(0.3f, odometry.getVelocity()) * signum;
+            (Ptheta2 * pow2(absAngleError) + Ptheta * absAngleError) *
+            signum(angleError);
         break;
     }
     threads.delay(1);

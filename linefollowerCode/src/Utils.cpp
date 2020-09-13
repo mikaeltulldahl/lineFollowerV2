@@ -31,3 +31,15 @@ float lowPassIIR(float in, float outPrevious, float dt, float rc) {
   float alpha = dt / (rc + dt);
   return (1.0f - alpha) * outPrevious + alpha * in;
 }
+
+float pow2(float in) {
+  return in * in;
+}
+
+float signum(float in) {
+  if (in >= 0.0f) {
+    return 1.0f;
+  } else {
+    return -1.0f;
+  }
+}

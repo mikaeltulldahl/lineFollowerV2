@@ -9,4 +9,8 @@ void getbufferMeanStd(const float* buffer,
 
 float lowPassIIR(float in, float outPrevious, float dt, float rc);
 
+float pow2(float in);
+
+float signum(float in);
+
 #endif /* UTILS_H_ */

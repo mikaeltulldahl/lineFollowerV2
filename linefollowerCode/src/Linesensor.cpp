@@ -35,6 +35,7 @@ Linesensor::Linesensor(Odometry* odoObj) {
 }
 
 void Linesensor::init(void) {
+  Serial.println("Linesensor init");
   for (int i = 0; i < SENSOR_COUNT; i++) {
     pinMode(adc_pins[i], INPUT);
   }
@@ -169,10 +170,10 @@ void Linesensor::update() {
     float length = 0.085f;  // mm
     float cosHeading = cosf(M_PI / 180.0f * odometry->getHeading());
     float sinHeading = sinf(M_PI / 180.0f * odometry->getHeading());
-    lineSensorOdoX = odometry->getX() + length * cosHeading -
-                     lineSensorValue * sinHeading;
-    lineSensorOdoY = odometry->getY() + length * sinHeading +
-                     lineSensorValue * cosHeading;
+    lineSensorOdoX =
+        odometry->getX() + length * cosHeading - lineSensorValue * sinHeading;
+    lineSensorOdoY =
+        odometry->getY() + length * sinHeading + lineSensorValue * cosHeading;
   }
 
   // printAsciiLineValue();
