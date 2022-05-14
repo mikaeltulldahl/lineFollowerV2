@@ -152,13 +152,13 @@ for i = finish:-1:start
         mapStartIdxOut = mapStartIdx;
     end
 
-%     if shouldPlot
-%         temp = [segmentCenter, segmentCenter + dist(i)*perpDir/norm(perpDir)];
-%         plot(temp(1,:),temp(2,:),'-b');
-%         text(temp(1,1),temp(2,1),num2str(i));
-%         text(temp(1,2),temp(2,2),num2str(mapStartIdx));
-%         drawnow;
-%     end
+    if shouldPlot
+        temp = [segmentCenter, segmentCenter + dist(i)*perpDir/norm(perpDir)];
+        plot(temp(1,:),temp(2,:),'-b');
+        text(temp(1,1),temp(2,1),num2str(i));
+        text(temp(1,2),temp(2,2),num2str(mapStartIdx));
+        drawnow;
+    end
 end
 
 % cost = sqrt(dot(abs(dist).^2, recording.length(start:finish))/sum(recording.length(start:finish)));

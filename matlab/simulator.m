@@ -13,7 +13,7 @@ dt = 0.1;
 simulationDuration = 10;
 T = round(simulationDuration/dt);%simulation tics
 
-generateLine = false;
+shouldGenerateLine = true;
 shouldPlot = true;
 manualDriving = false;
 
@@ -26,7 +26,7 @@ lineTemplate = struct('pos', zeros(2,N), 'heading', zeros(N,1), 'length', zeros(
 pathTemplate = struct('pos', zeros(2,N), 'heading', zeros(N,1), 'curvature', zeros(N,1), 'length', zeros(N,1), 'range', [1 1]);
 
 map = mapTemplate;
-if generateLine
+if shouldGenerateLine
     map.pos = generateLine(201, 0.03);%TODO must be closed loop!
 else
     [~, ~, ~, ~, lineRaw] = logParser(false);

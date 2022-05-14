@@ -39,17 +39,21 @@ end
 curvatureCorr = curvatureCorr/max(curvatureCorr);
 maxCorrIdxs = findPeaks(curvatureCorr, 0.95);
 lapLengths = segmentLengthInterpMean*diff(maxCorrIdxs);
-maxCorrLags = round(median(diff(maxCorrIdxs)));
-
-%close loop
-mismatch = lineSmoothInterp((maxCorrLags+1),:) - lineSmoothInterp(1,:);
-lineOut = zeros(maxCorrLags,2);
-for i = 1:maxCorrLags
-    lineOut(i,:) = lineSmoothInterp(i,:) - (i-1)/maxCorrLags*mismatch;
+if length(maxCorrIdxs) > 1
+    maxCorrLags = round(median(diff(maxCorrIdxs)));
+    
+    %close loop
+    mismatch = lineSmoothInterp((maxCorrLags+1),:) - lineSmoothInterp(1,:);
+    lineOut = zeros(maxCorrLags,2);
+    for i = 1:maxCorrLags
+        lineOut(i,:) = lineSmoothInterp(i,:) - (i-1)/maxCorrLags*mismatch;
+    end
+else
+    lineOut = lineSmoothInterp;
 end
 
-% outFile = [logName '_filtered.csv'];
-% csvwrite(outFile, lineOut);
+outFile = [logName '_filtered.csv'];
+csvwrite(outFile, lineOut);
 
 if shouldPlot
     figure(21)
